@@ -18,7 +18,7 @@ formLogin.addEventListener('submit', async (event) => {
     // Tenta fazer o login com a função do Firebase
     await signInWithEmailAndPassword(auth, email, senha);
     // Se o login for bem-sucedido, redireciona para a página principal
-    window.location.href = 'vendas.html'; // Use 'index.html' se esse for o nome da sua página principal
+    window.location.href = 'index.html'; // Use 'index.html' se esse for o nome da sua página principal
   } catch (error) {
     // Se der erro, mostra uma mensagem amigável
     console.error('Erro no login:', error.code);
