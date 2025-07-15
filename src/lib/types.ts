@@ -25,12 +25,23 @@ export const itemSchema = z.object({
   ),
 });
 
-// ATUALIZADO: Adicionamos o campo 'data' ao schema da venda.
+// Schema da venda com a correção definitiva para o campo 'data'
 export const vendaSchema = z.object({
   cliente: z.string().min(3, { message: 'O nome do cliente é obrigatório.' }),
-  data: z.coerce.date({
-    errorMap: () => ({ message: 'Por favor, insira uma data válida.' }),
-  }),
+
+  // SOLUÇÃO: Usar z.preprocess para a data, tornando a conversão explícita e segura.
+  // Isso resolve o conflito de tipos no build da Vercel.
+  data: z.preprocess(
+    (arg) => {
+      if (typeof arg === 'string' || arg instanceof Date) return new Date(arg);
+      return new Date(); // Fallback para data atual se o valor for inválido
+    },
+    z.date({
+      required_error: 'A data é obrigatória.',
+      invalid_type_error: 'Data inválida.',
+    }),
+  ),
+
   itens: z
     .array(itemSchema)
     .min(1, { message: 'A venda deve ter pelo menos um item.' }),

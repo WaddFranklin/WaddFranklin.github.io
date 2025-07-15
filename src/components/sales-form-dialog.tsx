@@ -64,7 +64,7 @@ export function SalesFormDialog({
 }: SalesFormDialogProps) {
   const form = useForm<VendaFormValues>({
     // A SOLUÇÃO DEFINITIVA: Adicionar 'as any' para contornar o erro de tipo no build.
-    resolver: zodResolver(vendaSchema) as any,
+    resolver: zodResolver(vendaSchema),
     defaultValues: {
       cliente: '',
       data: new Date(),
