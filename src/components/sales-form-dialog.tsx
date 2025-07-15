@@ -63,8 +63,8 @@ export function SalesFormDialog({
   onSubmit,
 }: SalesFormDialogProps) {
   const form = useForm<VendaFormValues>({
-    // A SOLUÇÃO DEFINITIVA: Adicionar 'as any' para contornar o erro de tipo no build.
-    resolver: zodResolver(vendaSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(vendaSchema) as any,
     defaultValues: {
       cliente: '',
       data: new Date(),
