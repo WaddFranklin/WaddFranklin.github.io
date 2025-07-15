@@ -38,7 +38,6 @@ export const vendaSchema = z.object({
     },
     z.date({
       required_error: 'A data é obrigatória.',
-      invalid_type_error: 'Data inválida.',
     }),
   ),
 
