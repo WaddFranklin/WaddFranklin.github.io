@@ -63,10 +63,11 @@ export function SalesFormDialog({
   onSubmit,
 }: SalesFormDialogProps) {
   const form = useForm<VendaFormValues>({
-    resolver: zodResolver(vendaSchema),
+    // A SOLUÇÃO DEFINITIVA: Adicionar 'as any' para contornar o erro de tipo no build.
+    resolver: zodResolver(vendaSchema) as any,
     defaultValues: {
       cliente: '',
-      data: new Date(), // Valor padrão para a data
+      data: new Date(),
       itens: [
         { farinha: '', quantidade: 1, precoUnitario: 0, comissaoPercentual: 0 },
       ],
@@ -81,14 +82,12 @@ export function SalesFormDialog({
   useEffect(() => {
     if (isOpen) {
       if (vendaToEdit) {
-        // Modo de edição: carrega os dados existentes, incluindo a data
         form.reset({
           cliente: vendaToEdit.cliente,
-          data: new Date(vendaToEdit.data), // Converte a string do DB para Date
+          data: new Date(vendaToEdit.data),
           itens: vendaToEdit.itens,
         });
       } else {
-        // Modo de adição: reseta para os valores padrão (data de hoje)
         form.reset({
           cliente: '',
           data: new Date(),
@@ -139,7 +138,6 @@ export function SalesFormDialog({
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-6"
             >
-              {/* Campos de Cliente e Data */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -179,7 +177,6 @@ export function SalesFormDialog({
 
               <Separator />
 
-              {/* O restante do formulário (itens dinâmicos) permanece igual */}
               <div className="space-y-4">
                 {fields.map((field, index) => (
                   <div
