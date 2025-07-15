@@ -40,7 +40,6 @@ const farinhasDisponiveis = [
   'Hermann pães especiais',
 ];
 
-// Props atualizadas para o dialog
 interface SalesFormDialogProps {
   vendaToEdit?: Venda | null;
   onSubmit: (values: VendaFormValues) => Promise<void>;
@@ -58,7 +57,6 @@ export function SalesFormDialog({
     resolver: zodResolver(vendaSchema),
   });
 
-  // Popula o formulário se estiver no modo de edição
   useEffect(() => {
     if (vendaToEdit) {
       form.reset(vendaToEdit);
@@ -66,7 +64,7 @@ export function SalesFormDialog({
       // Garante que o form está limpo para adicionar
       form.reset({
         cliente: '',
-        farinha: undefined,
+        farinha: '', // CORRIGIDO: Usar string vazia em vez de undefined
         quantidade: 1,
         precoUnitario: 0,
         comissaoPercentual: 0,
@@ -114,7 +112,7 @@ export function SalesFormDialog({
                   <FormLabel>Nome da Farinha</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value || ''}
                   >
                     <FormControl>
                       <SelectTrigger>
