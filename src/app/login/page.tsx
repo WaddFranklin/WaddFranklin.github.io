@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, FirebaseError } from 'firebase/auth'; // Importamos FirebaseError
+import { signInWithEmailAndPassword } from 'firebase/auth'; // Corrigido: sem importar FirebaseError
 import { auth } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
@@ -32,17 +32,18 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/');
     } catch (err) {
-      // O erro aqui
-      // Verificamos se o erro é do tipo que esperamos
-      if (err instanceof FirebaseError) {
-        console.error('Erro no login:', err.code);
-        if (err.code === 'auth/invalid-credential') {
+      // Abordagem correta: verificamos se o erro tem a propriedade 'code'
+      if (err && typeof err === 'object' && 'code' in err) {
+        const firebaseError = err as { code: string }; // Agora podemos usar 'code' com segurança
+        console.error('Erro no login:', firebaseError.code);
+        if (firebaseError.code === 'auth/invalid-credential') {
           setError('E-mail ou senha inválidos. Tente novamente.');
         } else {
           setError('Ocorreu um erro ao tentar fazer login.');
         }
       } else {
-        // Para erros genéricos
+        // Para erros que não são do Firebase
+        console.error('Erro inesperado:', err);
         setError('Ocorreu um erro inesperado.');
       }
     }
