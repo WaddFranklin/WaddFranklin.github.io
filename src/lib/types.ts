@@ -13,21 +13,21 @@ export const vendaSchema = z.object({
   quantidade: z.preprocess(
     (val) => Number(val),
     z
-      .number({ invalid_type_error: 'Quantidade deve ser um número.' })
+      .number({ message: 'Quantidade deve ser um número.' })
       .min(1, { message: 'A quantidade deve ser no mínimo 1.' }),
   ),
 
   precoUnitario: z.preprocess(
     (val) => Number(val),
     z
-      .number({ invalid_type_error: 'Preço deve ser um número.' })
+      .number({ message: 'Preço deve ser um número.' })
       .min(0.01, { message: 'O preço unitário deve ser positivo.' }),
   ),
 
   comissaoPercentual: z.preprocess(
     (val) => Number(val),
     z
-      .number({ invalid_type_error: 'Comissão deve ser um número.' })
+      .number({ message: 'Comissão deve ser um número.' })
       .min(0, 'Comissão não pode ser negativa.')
       .max(100, 'Comissão não pode ser maior que 100.'),
   ),
