@@ -10,7 +10,6 @@ import {
 } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 
 // Define o tipo para o valor do contexto
 type AuthContextType = {

@@ -4,11 +4,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useAuth } from './auth-provider';
 import { vendaSchema, VendaFormValues, Venda } from '@/lib/types';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +13,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';

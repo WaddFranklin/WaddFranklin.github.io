@@ -1,9 +1,10 @@
 // app/login/page.tsx
-'use client'; // Marcamos como um Componente de Cliente para usar hooks e interatividade
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, FirebaseError } from 'firebase/auth'; // Importamos FirebaseError
+import { auth } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { auth } from '@/lib/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -30,13 +30,20 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/'); // Redireciona para a página principal após o login
-    } catch (err: any) {
-      console.error('Erro no login:', err.code);
-      if (err.code === 'auth/invalid-credential') {
-        setError('E-mail ou senha inválidos. Tente novamente.');
+      router.push('/');
+    } catch (err) {
+      // O erro aqui
+      // Verificamos se o erro é do tipo que esperamos
+      if (err instanceof FirebaseError) {
+        console.error('Erro no login:', err.code);
+        if (err.code === 'auth/invalid-credential') {
+          setError('E-mail ou senha inválidos. Tente novamente.');
+        } else {
+          setError('Ocorreu um erro ao tentar fazer login.');
+        }
       } else {
-        setError('Ocorreu um erro ao tentar fazer login.');
+        // Para erros genéricos
+        setError('Ocorreu um erro inesperado.');
       }
     }
   };
