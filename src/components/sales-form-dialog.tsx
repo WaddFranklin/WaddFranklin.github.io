@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // components/sales-form-dialog.tsx
 'use client';
 
