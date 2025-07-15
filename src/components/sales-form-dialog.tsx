@@ -55,16 +55,24 @@ export function SalesFormDialog({
 }: SalesFormDialogProps) {
   const form = useForm<VendaFormValues>({
     resolver: zodResolver(vendaSchema),
+    // CORREÇÃO PRINCIPAL: Definir os valores padrão na inicialização do hook
+    defaultValues: {
+      cliente: '',
+      farinha: '',
+      quantidade: 1,
+      precoUnitario: 0,
+      comissaoPercentual: 0,
+    },
   });
 
+  // O useEffect agora serve apenas para RE-definir os valores quando necessário
   useEffect(() => {
-    if (vendaToEdit) {
+    if (isOpen && vendaToEdit) {
       form.reset(vendaToEdit);
-    } else {
-      // Garante que o form está limpo para adicionar
+    } else if (isOpen && !vendaToEdit) {
       form.reset({
         cliente: '',
-        farinha: '', // CORRIGIDO: Usar string vazia em vez de undefined
+        farinha: '',
         quantidade: 1,
         precoUnitario: 0,
         comissaoPercentual: 0,
@@ -89,7 +97,7 @@ export function SalesFormDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* O conteúdo do formulário (FormField, etc) permanece o mesmo */}
+            {/* O restante do formulário permanece o mesmo */}
             <FormField
               control={form.control}
               name="cliente"
