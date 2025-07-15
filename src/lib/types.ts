@@ -31,15 +31,12 @@ export const vendaSchema = z.object({
 
   // SOLUÇÃO: Usar z.preprocess para a data, tornando a conversão explícita e segura.
   // Isso resolve o conflito de tipos no build da Vercel.
-  data: z.preprocess(
-    (arg) => {
+  data: z
+    .preprocess((arg) => {
       if (typeof arg === 'string' || arg instanceof Date) return new Date(arg);
       return new Date(); // Fallback para data atual se o valor for inválido
-    },
-    z.date({
-      required_error: 'A data é obrigatória.',
-    }),
-  ),
+    }, z.date())
+    .refine((date) => !!date, { message: 'A data é obrigatória.' }),
 
   itens: z
     .array(itemSchema)
