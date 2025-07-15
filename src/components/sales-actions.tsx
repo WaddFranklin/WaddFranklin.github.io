@@ -1,15 +1,12 @@
 // components/sales-actions.tsx
 'use client';
 
-import { useState } from 'react';
-import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Venda, VendaFormValues } from '@/lib/types';
+import { Venda } from '@/lib/types';
 import { toast } from 'sonner';
 
-// Importando os ícones que vamos usar
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -29,15 +26,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { SalesFormDialog } from './sales-form-dialog';
 
 interface SalesActionsProps {
   venda: Venda;
+  onEdit: () => void; // Função para notificar o componente pai para abrir o dialog de edição
 }
 
-export function SalesActions({ venda }: SalesActionsProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
+export function SalesActions({ venda, onEdit }: SalesActionsProps) {
   const handleDelete = async () => {
     const promise = deleteDoc(doc(db, 'vendas', venda.id));
     toast.promise(promise, {
@@ -47,80 +42,52 @@ export function SalesActions({ venda }: SalesActionsProps) {
     });
   };
 
-  const handleUpdate = async (values: VendaFormValues) => {
-    const totalVenda = values.quantidade * values.precoUnitario;
-    const vendaRef = doc(db, 'vendas', venda.id);
-
-    const promise = updateDoc(vendaRef, {
-      ...values,
-      totalVenda,
-    });
-
-    toast.promise(promise, {
-      loading: 'Atualizando venda...',
-      success: () => {
-        setIsEditDialogOpen(false);
-        return 'Venda atualizada com sucesso!';
-      },
-      error: 'Erro ao atualizar a venda.',
-    });
-  };
-
   return (
-    <>
-      {/* Dialog de Edição */}
-      <SalesFormDialog
-        isOpen={isEditDialogOpen}
-        setIsOpen={setIsEditDialogOpen}
-        vendaToEdit={venda}
-        onSubmit={handleUpdate}
-      />
+    // O Dialog de edição foi movido para o componente pai (SalesDashboard)
+    // para melhor controle do estado.
+    <AlertDialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Abrir menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+          <DropdownMenuItem onClick={onEdit}>
+            <Pencil className="mr-2 h-4 w-4" />
+            <span>Editar</span>
+          </DropdownMenuItem>
 
-      {/* Dialog de Confirmação para Excluir */}
-      <AlertDialog>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" /> {/* Ícone de Editar */}
-              <span>Editar</span>
+          <AlertDialogTrigger asChild>
+            <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Excluir</span>
             </DropdownMenuItem>
+          </AlertDialogTrigger>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-            <AlertDialogTrigger asChild>
-              <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                <Trash2 className="mr-2 h-4 w-4" /> {/* Ícone de Excluir */}
-                <span>Excluir</span>
-              </DropdownMenuItem>
-            </AlertDialogTrigger>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Essa ação não pode ser desfeita. Isso excluirá permanentemente a
-              venda do cliente{' '}
-              <span className="font-semibold">{venda.cliente}</span>.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Sim, excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Essa ação não pode ser desfeita. Isso excluirá permanentemente a
+            venda do cliente{' '}
+            <span className="font-semibold">{venda.cliente}</span>.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Sim, excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

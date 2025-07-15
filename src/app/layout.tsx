@@ -1,12 +1,14 @@
 // app/layout.tsx
+
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+// 1. Importe as fontes (sans-serif para texto e mono para código)
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
+
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/components/auth-provider';
-import { Toaster } from '@/components/ui/sonner'; // ATENÇÃO: Importa de 'ui/sonner'
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
   title: 'Controle de Vendas',
@@ -19,16 +21,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-br" suppressHydrationWarning>
+    // 2. Adicione as classes das fontes ao seu HTML
+    <html
+      lang="pt-br"
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      suppressHydrationWarning
+    >
       <body
         className={cn(
           'min-h-screen bg-background font-sans antialiased',
-          inter.variable,
+          // Não precisamos mais da classe da Inter aqui
         )}
       >
         <AuthProvider>
           {children}
-          <Toaster richColors /> {/* Adiciona o Sonner aqui */}
+          <Toaster richColors />
         </AuthProvider>
       </body>
     </html>

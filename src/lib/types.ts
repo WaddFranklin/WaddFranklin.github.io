@@ -1,45 +1,51 @@
 // lib/types.ts
 import { z } from 'zod';
 
-// Schema para validação. Usamos z.preprocess para garantir a conversão de tipo.
-export const vendaSchema = z.object({
-  cliente: z
-    .string()
-    .min(3, { message: 'O nome do cliente deve ter pelo menos 3 caracteres.' }),
-  farinha: z.string().min(1, { message: 'Por favor, selecione uma farinha.' }),
+// O itemSchema não precisa de alterações.
+export const itemSchema = z.object({
+  farinha: z.string().min(1, { message: 'Selecione uma farinha.' }),
 
-  // Converte explicitamente o valor para número ANTES de validar.
-  // Isso resolve o problema de inferência de tipo no build da Vercel.
   quantidade: z.preprocess(
-    (val) => Number(val),
-    z
-      .number({ message: 'Quantidade deve ser um número.' })
-      .min(1, { message: 'A quantidade deve ser no mínimo 1.' }),
+    (val) => Number(String(val).trim() || 0),
+    z.number().min(1, { message: 'A qtd. deve ser no mínimo 1.' }),
   ),
 
   precoUnitario: z.preprocess(
-    (val) => Number(val),
-    z
-      .number({ message: 'Preço deve ser um número.' })
-      .min(0.01, { message: 'O preço unitário deve ser positivo.' }),
+    (val) => Number(String(val).trim() || 0),
+    z.number().min(0.01, { message: 'O preço deve ser positivo.' }),
   ),
 
   comissaoPercentual: z.preprocess(
-    (val) => Number(val),
+    (val) => Number(String(val).trim() || 0),
     z
-      .number({ message: 'Comissão deve ser um número.' })
-      .min(0, 'Comissão não pode ser negativa.')
-      .max(100, 'Comissão não pode ser maior que 100.'),
+      .number()
+      .min(0, { message: 'Comissão não pode ser negativa.' })
+      .max(100, { message: 'Comissão não pode ser maior que 100.' })
+      .default(0),
   ),
 });
 
-// A inferência de tipo agora funcionará corretamente.
+// ATUALIZADO: Adicionamos o campo 'data' ao schema da venda.
+export const vendaSchema = z.object({
+  cliente: z.string().min(3, { message: 'O nome do cliente é obrigatório.' }),
+  data: z.coerce.date({
+    errorMap: () => ({ message: 'Por favor, insira uma data válida.' }),
+  }),
+  itens: z
+    .array(itemSchema)
+    .min(1, { message: 'A venda deve ter pelo menos um item.' }),
+});
+
+// Os tipos abaixo são atualizados automaticamente pela inferência do Zod.
+export type ItemVenda = z.infer<typeof itemSchema>;
 export type VendaFormValues = z.infer<typeof vendaSchema>;
 
-// Define o tipo completo da Venda, como ela é salva no banco de dados
-export type Venda = VendaFormValues & {
+export type Venda = {
   id: string;
-  data: string;
+  cliente: string;
+  data: string; // Continuamos salvando como string (formato ISO) no Firestore.
+  itens: ItemVenda[];
   totalVenda: number;
+  totalComissao: number;
   userId: string;
 };
