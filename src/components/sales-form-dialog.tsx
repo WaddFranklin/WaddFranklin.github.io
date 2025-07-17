@@ -122,7 +122,7 @@ export function SalesFormDialog({
       <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? 'Editar Venda' : 'Registrar Nova Venda'}
+            {isEditMode ? 'Editar Venda' : ' Nova Venda'}
           </DialogTitle>
           <DialogDescription>
             {isEditMode

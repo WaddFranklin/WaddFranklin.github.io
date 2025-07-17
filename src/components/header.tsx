@@ -4,6 +4,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from './auth-provider';
 import { Button } from './ui/button';
+import { LogOut } from 'lucide-react';
 
 export default function Header() {
   const { user, supabase } = useAuth();
@@ -30,6 +31,7 @@ export default function Header() {
         )}
       </div>
       <Button variant="outline" onClick={handleLogout}>
+        <LogOut />
         Sair
       </Button>
     </header>
