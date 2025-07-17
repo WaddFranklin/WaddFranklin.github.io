@@ -200,7 +200,7 @@ export function SalesDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button onClick={handleOpenAddDialog}>Registrar Venda</Button>
+        <Button onClick={handleOpenAddDialog}>Cadastrar Venda</Button>
       </div>
 
       <SalesFormDialog 

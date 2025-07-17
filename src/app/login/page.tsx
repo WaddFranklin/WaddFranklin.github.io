@@ -1,12 +1,13 @@
-// src/app/login/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; // Importa o componente Link
-import { createClient } from "@/lib/supabaseClient";
+import Link from "next/link";
+// ATUALIZADO: Importa do novo caminho
+import { createClient } from "@/lib/supabase/client";
 
 import { Button } from "@/components/ui/button";
+// ... (outras importações do Shadcn)
 import {
   Card,
   CardContent,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -38,12 +40,16 @@ export default function LoginPage() {
 
     if (error) {
       setError(error.message);
+      setLoading(false);
     } else {
+      // ATUALIZADO: router.refresh() notifica o middleware para atualizar a sessão.
+      router.refresh();
       router.push("/");
+      setLoading(false);
     }
-    setLoading(false);
   };
-
+  
+  // ... (o resto do JSX do formulário permanece igual)
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-sm">
@@ -87,8 +93,7 @@ export default function LoginPage() {
             </Button>
           </CardFooter>
         </form>
-        {/* --- LINK ADICIONADO --- */}
-        <div className="text-center text-sm">
+        <div className="mt-4 text-center text-sm">
           Não tem uma conta?{" "}
           <Link href="/signup" className="underline">
             Cadastre-se

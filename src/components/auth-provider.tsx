@@ -1,4 +1,3 @@
-// src/components/auth-provider.tsx
 'use client';
 
 import {
@@ -9,7 +8,8 @@ import {
   ReactNode,
 } from 'react';
 import { User, SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabaseClient';
+// ATUALIZADO: Importa do novo caminho
+import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/lib/database.types';
 
 type Profile = Database['appvendas']['Tables']['profiles']['Row'];
@@ -40,17 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        // CORREÇÃO: Usamos .single() que pode retornar um erro se o perfil não existir.
-        // Vamos tratar esse erro graciosamente.
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single();
         
-        // Se houver um erro, mas for porque a linha não existe, não é um erro crítico.
-        // Apenas significa que o perfil ainda não foi criado.
-        if (error && error.code !== 'PGRST116') { // PGRST116 = "exact one row not found"
+        if (error && error.code !== 'PGRST116') {
           console.error("Erro ao buscar perfil:", error);
         }
         

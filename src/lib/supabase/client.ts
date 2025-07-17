@@ -1,7 +1,7 @@
 // src/lib/supabaseClient.ts
 
 import { createBrowserClient } from '@supabase/ssr';
-import { Database } from './database.types'; // Importa os tipos do banco de dados
+import { Database } from '../database.types'; // Importa os tipos do banco de dados
 
 export function createClient() {
   if (
