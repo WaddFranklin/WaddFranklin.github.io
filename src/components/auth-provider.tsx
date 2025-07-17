@@ -1,4 +1,4 @@
-// components/auth-provider.tsx
+// src/components/auth-provider.tsx
 'use client';
 
 import {
@@ -8,19 +8,22 @@ import {
   useContext,
   ReactNode,
 } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { User, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabaseClient';
 
-// Define o tipo para o valor do contexto
+// O tipo do nosso contexto agora também pode incluir o cliente Supabase
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  supabase: SupabaseClient;
 };
 
-// Cria o contexto com um valor padrão
+// Criamos um cliente Supabase inicial que será substituído
+const supabase = createClient();
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  supabase,
 });
 
 // Componente Provedor
@@ -29,22 +32,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged retorna uma função para "cancelar a inscrição"
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    // A função onAuthStateChange do Supabase retorna um objeto com uma propriedade `subscription`
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      // O 'session' contém as informações do usuário logado
+      setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Limpa o listener quando o componente é desmontado
-    return () => unsubscribe();
+    // A função de limpeza é retornada pela propriedade subscription
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const value = { user, loading };
+  const value = { user, loading, supabase };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // Hook customizado para usar o contexto de autenticação
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
+  return context;
 };

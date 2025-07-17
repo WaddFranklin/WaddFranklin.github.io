@@ -1,4 +1,5 @@
-// components/sales-table.tsx
+// src/components/sales-table.tsx
+
 'use client';
 
 import { useState } from 'react';
@@ -24,9 +25,9 @@ import { SalesActions } from './sales-actions';
 interface SalesTableProps {
   data: Venda[];
   onEdit: (venda: Venda) => void;
+  onDataChange: () => void; // Prop para notificar sobre mudanças nos dados
 }
 
-// Função para formatar datas
 const formatDate = (isoString: string) => {
   return new Date(isoString).toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -35,7 +36,6 @@ const formatDate = (isoString: string) => {
   });
 };
 
-// Função para formatar valores como moeda brasileira
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -43,7 +43,7 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-export function SalesTable({ data, onEdit }: SalesTableProps) {
+export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
   const [openRowId, setOpenRowId] = useState<string | null>(null);
 
   const totalGeralVendas = data.reduce(
@@ -108,9 +108,11 @@ export function SalesTable({ data, onEdit }: SalesTableProps) {
                       {formatCurrency(venda.totalVenda)}
                     </TableCell>
                     <TableCell className="text-center">
+                      {/* Passando a função onDataChange para as ações */}
                       <SalesActions
                         venda={venda}
                         onEdit={() => onEdit(venda)}
+                        onDataChange={onDataChange}
                       />
                     </TableCell>
                   </TableRow>

@@ -1,10 +1,8 @@
-// components/sales-actions.tsx
 'use client';
 
-import { doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Venda } from '@/lib/types';
 import { toast } from 'sonner';
+import { useAuth } from './auth-provider';
 
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,22 +27,30 @@ import {
 
 interface SalesActionsProps {
   venda: Venda;
-  onEdit: () => void; // Função para notificar o componente pai para abrir o dialog de edição
+  onEdit: () => void;
+  onDataChange: () => void; // Prop para notificar sobre mudanças nos dados
 }
 
-export function SalesActions({ venda, onEdit }: SalesActionsProps) {
+export function SalesActions({
+  venda,
+  onEdit,
+  onDataChange,
+}: SalesActionsProps) {
+  const { supabase } = useAuth();
+
   const handleDelete = async () => {
-    const promise = deleteDoc(doc(db, 'vendas', venda.id));
-    toast.promise(promise, {
-      loading: 'Excluindo venda...',
-      success: 'Venda excluída com sucesso!',
-      error: 'Erro ao excluir a venda.',
-    });
+    const { error } = await supabase.from('vendas').delete().eq('id', venda.id);
+
+    if (error) {
+      toast.error('Erro ao excluir a venda.');
+      console.error(error);
+    } else {
+      toast.success('Venda excluída com sucesso!');
+      onDataChange(); // Chama a função para recarregar os dados
+    }
   };
 
   return (
-    // O Dialog de edição foi movido para o componente pai (SalesDashboard)
-    // para melhor controle do estado.
     <AlertDialog>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

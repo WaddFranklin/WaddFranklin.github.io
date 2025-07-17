@@ -1,23 +1,21 @@
-// components/header.tsx
+// src/components/header.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useAuth } from './auth-provider';
 import { Button } from './ui/button';
 
 export default function Header() {
-  const { user } = useAuth();
+  const { user, supabase } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/login');
-    } catch (error) {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
       console.error('Erro ao fazer logout:', error);
-      // Opcional: mostrar uma notificação de erro para o usuário
+    } else {
+      // Redireciona para o login após o logout
+      router.push('/login');
     }
   };
 
