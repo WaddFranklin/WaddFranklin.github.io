@@ -9,7 +9,7 @@ import { LogOut } from 'lucide-react';
 export default function Header() {
   const { user, profile, supabase } = useAuth();
   const router = useRouter();
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [loggingOut] = useState(false);
 
 const handleLogout = async () => {
   const { error } = await supabase.auth.signOut();
