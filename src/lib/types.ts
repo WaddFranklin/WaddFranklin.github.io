@@ -56,3 +56,12 @@ export type Venda = {
   totalComissao: number;
   userId: string;
 };
+
+// --- NOVO SCHEMA PARA O CADASTRO DE USUÁRIO ---
+export const signUpSchema = z.object({
+    fullName: z.string().min(3, { message: "O nome completo é obrigatório." }),
+    email: z.email({ message: "Por favor, insira um e-mail válido." }),
+    password: z.string().min(8, { message: "A senha deve ter pelo menos 8 caracteres." }),
+});
+
+export type SignUpFormValues = z.infer<typeof signUpSchema>;

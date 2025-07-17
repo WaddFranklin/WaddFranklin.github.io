@@ -1,11 +1,12 @@
 // src/app/login/page.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabaseClient';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link"; // Importa o componente Link
+import { createClient } from "@/lib/supabaseClient";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,13 +14,13 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -38,10 +39,7 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
     } else {
-      // O onAuthStateChange no AuthProvider vai detectar o login
-      // e o ProtectedRoute fará o redirecionamento.
-      // Mas podemos forçar aqui também para uma melhor experiência.
-      router.push('/');
+      router.push("/");
     }
     setLoading(false);
   };
@@ -80,15 +78,22 @@ export default function LoginPage() {
               />
             </div>
             {error && (
-              <div className="text-red-500 text-sm text-center">{error}</div>
+                <div className="text-red-500 text-sm text-center">{error}</div>
             )}
           </CardContent>
           <CardFooter className="mt-4">
             <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? "Entrando..." : "Entrar"}
             </Button>
           </CardFooter>
         </form>
+        {/* --- LINK ADICIONADO --- */}
+        <div className="text-center text-sm">
+          Não tem uma conta?{" "}
+          <Link href="/signup" className="underline">
+            Cadastre-se
+          </Link>
+        </div>
       </Card>
     </div>
   );

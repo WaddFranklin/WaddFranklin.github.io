@@ -10,34 +10,55 @@ import {
 } from 'react';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabaseClient';
-import { Database } from '@/lib/database.types'; // 1. IMPORTAMOS O TIPO DO BANCO
+import { Database } from '@/lib/database.types';
 
-// O tipo do nosso contexto agora usa o SupabaseClient tipado
+type Profile = Database['appvendas']['Tables']['profiles']['Row'];
+
 type AuthContextType = {
   user: User | null;
+  profile: Profile | null;
   loading: boolean;
-  supabase: SupabaseClient<Database>; // 2. USAMOS O TIPO ESPECÍFICO AQUI
+  supabase: SupabaseClient<Database>;
 };
 
-// Criamos um cliente Supabase inicial que será substituído
 const supabase = createClient();
 
-// O createContext agora espera o tipo correto e não dará mais erro
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  profile: null,
   loading: true,
   supabase,
 });
 
-// Componente Provedor
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        // CORREÇÃO: Usamos .single() que pode retornar um erro se o perfil não existir.
+        // Vamos tratar esse erro graciosamente.
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        // Se houver um erro, mas for porque a linha não existe, não é um erro crítico.
+        // Apenas significa que o perfil ainda não foi criado.
+        if (error && error.code !== 'PGRST116') { // PGRST116 = "exact one row not found"
+          console.error("Erro ao buscar perfil:", error);
+        }
+        
+        setProfile(data);
+      } else {
+        setProfile(null);
+      }
+
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -47,12 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const value = { user, loading, supabase };
+  const value = { user, profile, loading, supabase };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Hook customizado para usar o contexto de autenticação
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
