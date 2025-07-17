@@ -1,4 +1,3 @@
-// src/components/sales-dashboard.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -9,19 +8,6 @@ import { toast } from 'sonner';
 import { SalesTable } from './sales-table';
 import { SalesFormDialog } from './sales-form-dialog';
 import { Button } from './ui/button';
-
-// Este tipo não é mais estritamente necessário com a inferência do Supabase,
-// mas o mantemos para clareza.
-type VendaComItens = Venda & {
-  itens_venda:
-    | {
-        farinha: string;
-        quantidade: number;
-        preco_unitario: number;
-        comissao_percentual: number;
-      }[]
-    | null; // A propriedade pode ser nula
-};
 
 export function SalesDashboard() {
   const { user, supabase } = useAuth();
@@ -45,9 +31,9 @@ export function SalesDashboard() {
       toast.error('Não foi possível carregar as vendas.');
       setVendas([]);
     } else if (data) {
-      const vendasFormatadas = data.map((venda: VendaComItens) => {
-        // CORREÇÃO PRINCIPAL: Verificamos se 'itens_venda' existe.
-        // Se for nulo, usamos um array vazio para evitar erros.
+      // CORREÇÃO: Removida a anotação de tipo (venda: VendaComItens).
+      // TypeScript agora infere o tipo de 'venda' corretamente a partir de 'data'.
+      const vendasFormatadas = data.map((venda) => {
         const itens = venda.itens_venda || [];
 
         const { totalVenda, totalComissao } = itens.reduce(
@@ -176,7 +162,6 @@ export function SalesDashboard() {
         vendaToEdit={vendaToEdit}
       />
 
-      {/* Passando a função de refetch para a tabela */}
       <SalesTable
         data={vendas}
         onEdit={handleOpenEditDialog}

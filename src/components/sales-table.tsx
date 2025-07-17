@@ -1,5 +1,3 @@
-// src/components/sales-table.tsx
-
 'use client';
 
 import { useState } from 'react';
@@ -108,7 +106,6 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
                       {formatCurrency(venda.totalVenda)}
                     </TableCell>
                     <TableCell className="text-center">
-                      {/* Passando a função onDataChange para as ações */}
                       <SalesActions
                         venda={venda}
                         onEdit={() => onEdit(venda)}
