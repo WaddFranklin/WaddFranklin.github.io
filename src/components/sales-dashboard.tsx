@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { SalesTable } from "./sales-table";
 import { SalesFormDialog } from "./sales-form-dialog";
 import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
 
 export function SalesDashboard() {
   const { user, supabase } = useAuth();
@@ -24,9 +23,6 @@ export function SalesDashboard() {
 
     setLoading(true);
 
-    // --- INÍCIO DA LÓGICA CORRIGIDA ---
-
-    // 1. Busca todas as vendas do usuário.
     const { data: vendasData, error: vendasError } = await supabase
       .from("vendas")
       .select('*')
@@ -40,21 +36,17 @@ export function SalesDashboard() {
     }
 
     if (vendasData && vendasData.length > 0) {
-      // 2. Pega os IDs de todas as vendas encontradas.
       const vendaIds = vendasData.map(v => v.id);
-
-      // 3. Busca todos os itens que pertencem a essas vendas.
       const { data: itensData, error: itensError } = await supabase
         .from("itens_venda")
         .select('*')
-        .in('venda_id', vendaIds); // .in() é o equivalente a "WHERE id IN (...)" do SQL.
+        .in('venda_id', vendaIds);
 
       if (itensError) {
         console.error("Erro ao buscar itens:", itensError);
         toast.error("Não foi possível carregar os itens das vendas.");
       }
 
-      // 4. Junta os dados no código.
       const vendasComItens = vendasData.map(venda => {
         const itensDaVenda = itensData?.filter(item => item.venda_id === venda.id) || [];
         
@@ -85,13 +77,9 @@ export function SalesDashboard() {
       });
 
       setVendas(vendasComItens);
-
     } else {
-      // Se não houver vendas, a lista fica vazia.
       setVendas([]);
     }
-
-    // --- FIM DA LÓGICA CORRIGIDA ---
     
     setLoading(false);
   }, [user, supabase]);
@@ -116,8 +104,56 @@ export function SalesDashboard() {
       return;
     }
 
-    if (!vendaToEdit) {
-      // ADICIONAR NOVA VENDA
+    if (vendaToEdit) {
+      // --- INÍCIO DA LÓGICA DE ATUALIZAÇÃO CORRIGIDA ---
+      
+      // 1. Atualiza a venda principal
+      const { error: updateError } = await supabase
+        .from("vendas")
+        .update({ cliente_nome: values.cliente, data: values.data.toISOString() })
+        .eq("id", vendaToEdit.id);
+
+      if (updateError) {
+        toast.error("Erro ao atualizar os dados da venda.");
+        console.error(updateError);
+        return;
+      }
+
+      // 2. Deleta todos os itens antigos associados a esta venda
+      const { error: deleteError } = await supabase
+        .from("itens_venda")
+        .delete()
+        .eq("venda_id", vendaToEdit.id);
+
+      if (deleteError) {
+        toast.error("Erro ao limpar itens antigos da venda.");
+        console.error(deleteError);
+        return;
+      }
+
+      // 3. Prepara e insere a nova lista de itens
+      const itensToInsert = values.itens.map(item => ({
+        venda_id: vendaToEdit.id,
+        user_id: user.id,
+        farinha: item.farinha,
+        quantidade: item.quantidade,
+        preco_unitario: item.precoUnitario,
+        comissao_percentual: item.comissaoPercentual,
+      }));
+
+      const { error: insertItemsError } = await supabase.from("itens_venda").insert(itensToInsert);
+
+      if (insertItemsError) {
+        toast.error("Erro ao salvar os novos itens da venda.");
+        console.error(insertItemsError);
+      } else {
+        toast.success("Venda atualizada com sucesso!");
+        fetchVendas(); // Atualiza a lista com os novos dados
+      }
+      // --- FIM DA LÓGICA DE ATUALIZAÇÃO CORRIGIDA ---
+
+    } else {
+      // LÓGICA PARA ADICIONAR NOVA VENDA (permanece a mesma)
       const { data: vendaData, error: vendaError } = await supabase
         .from("vendas")
         .insert({
@@ -152,19 +188,6 @@ export function SalesDashboard() {
         toast.success("Venda registrada com sucesso!");
         fetchVendas();
       }
-    } else {
-      // ATUALIZAR VENDA
-      const { error } = await supabase
-        .from("vendas")
-        .update({ cliente_nome: values.cliente, data: values.data.toISOString() })
-        .eq("id", vendaToEdit.id);
-      
-      if (error) {
-        toast.error("Erro ao atualizar a venda.");
-      } else {
-        toast.success("Venda atualizada!");
-        fetchVendas();
-      }
     }
 
     setIsFormOpen(false);
@@ -177,7 +200,7 @@ export function SalesDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button onClick={handleOpenAddDialog}><Plus />Cadastrar Venda</Button>
+        <Button onClick={handleOpenAddDialog}>Registrar Venda</Button>
       </div>
 
       <SalesFormDialog 
