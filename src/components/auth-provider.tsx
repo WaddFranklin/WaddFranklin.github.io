@@ -10,16 +10,19 @@ import {
 } from 'react';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabaseClient';
+import { Database } from '@/lib/database.types'; // 1. IMPORTAMOS O TIPO DO BANCO
 
-// O tipo do nosso contexto agora também pode incluir o cliente Supabase
+// O tipo do nosso contexto agora usa o SupabaseClient tipado
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  supabase: SupabaseClient;
+  supabase: SupabaseClient<Database>; // 2. USAMOS O TIPO ESPECÍFICO AQUI
 };
 
 // Criamos um cliente Supabase inicial que será substituído
 const supabase = createClient();
+
+// O createContext agora espera o tipo correto e não dará mais erro
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -32,16 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // A função onAuthStateChange do Supabase retorna um objeto com uma propriedade `subscription`
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      // O 'session' contém as informações do usuário logado
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // A função de limpeza é retornada pela propriedade subscription
     return () => {
       subscription.unsubscribe();
     };
