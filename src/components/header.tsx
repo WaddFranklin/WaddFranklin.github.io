@@ -1,42 +1,26 @@
+// src/components/header.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from './auth-provider';
-import { Button } from './ui/button';
-import { LogOut } from 'lucide-react';
+// O botão e o ícone de toggle não são mais necessários aqui
+
+// A interface de props também não é mais necessária
+// interface HeaderProps {
+//   toggleSidebar: () => void;
+// }
 
 export default function Header() {
-  const { user, profile, supabase } = useAuth();
-  const router = useRouter();
-  const [loggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Erro ao fazer logout:', error);
-    } else {
-      // Aguarde o evento de mudança de autenticação antes de redirecionar
-      setTimeout(() => {
-        router.push('/login');
-      }, 500); // pequeno delay para garantir atualização do contexto
-    }
-  };
+  const { user, profile } = useAuth();
 
   return (
-    <header className="flex justify-between items-center mb-6 pb-4 border-b">
-      <div>
-        <h1 className="text-2xl font-bold">Controle de Vendas</h1>
-        {user && (
-          <p className="text-sm text-muted-foreground">
-            Bem-vindo, {profile?.full_name || user.email}
-          </p>
-        )}
-      </div>
-      <Button variant="outline" onClick={handleLogout} disabled={loggingOut}>
-        <LogOut className="" />
-        {loggingOut ? 'Saindo...' : 'Sair'}
-      </Button>
+    // Removemos o botão e o flex container externo
+    <header className="mb-6 pb-4 border-b">
+      <h1 className="text-2xl font-bold">Dashboard de Vendas</h1>
+      {user && (
+        <p className="text-sm text-muted-foreground">
+          Bem-vindo, {profile?.full_name || user.email}
+        </p>
+      )}
     </header>
   );
 }
