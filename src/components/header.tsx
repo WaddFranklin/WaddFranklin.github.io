@@ -11,17 +11,17 @@ export default function Header() {
   const router = useRouter();
   const [loggingOut] = useState(false);
 
-const handleLogout = async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error('Erro ao fazer logout:', error);
-  } else {
-    // Aguarde o evento de mudança de autenticação antes de redirecionar
-    setTimeout(() => {
-      router.push('/login');
-    }, 500); // pequeno delay para garantir atualização do contexto
-  }
-};
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Erro ao fazer logout:', error);
+    } else {
+      // Aguarde o evento de mudança de autenticação antes de redirecionar
+      setTimeout(() => {
+        router.push('/login');
+      }, 500); // pequeno delay para garantir atualização do contexto
+    }
+  };
 
   return (
     <header className="flex justify-between items-center mb-6 pb-4 border-b">
@@ -34,7 +34,7 @@ const handleLogout = async () => {
         )}
       </div>
       <Button variant="outline" onClick={handleLogout} disabled={loggingOut}>
-        <LogOut className="mr-2 h-4 w-4" />
+        <LogOut className="" />
         {loggingOut ? 'Saindo...' : 'Sair'}
       </Button>
     </header>
