@@ -1,51 +1,62 @@
 // src/middleware.ts
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 
 export async function middleware(request: NextRequest) {
-  // Cria uma resposta inicial que podemos modificar.
-  const response = NextResponse.next({
+  let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  // Cria um cliente Supabase que pode rodar no servidor (no middleware).
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      // CORREÇÃO: Usando a nova API de cookies recomendada.
-      // Esta abordagem é mais limpa e resolve o aviso de 'deprecated'.
       cookies: {
         get(name: string) {
           return request.cookies.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
-          // A nova abordagem lida com a atualização dos cookies diretamente na resposta.
+        set(name: string, value: string, options) {
+          // Se o middleware definir um cookie, adicione-o aos cabeçalhos da resposta.
+          request.cookies.set({ name, value, ...options });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
           response.cookies.set({ name, value, ...options });
         },
-        remove(name: string, options: CookieOptions) {
-          // A nova abordagem lida com a remoção dos cookies diretamente na resposta.
+        remove(name: string, options) {
+          // Se o middleware remover um cookie, atualize os cabeçalhos da requisição e da resposta.
+          request.cookies.set({ name, value: '', ...options });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
           response.cookies.set({ name, value: '', ...options });
         },
       },
     }
   );
 
-  // A LINHA MAIS IMPORTANTE:
-  // Tenta buscar a sessão do usuário. Se o token estiver expirado,
-  // o Supabase irá tentar renová-lo usando o Refresh Token, mantendo a sessão ativa.
-  await supabase.auth.getSession();
+  // LINHA CRÍTICA:
+  // Atualiza a sessão do usuário. Se o token de acesso tiver expirado,
+  // ele tentará atualizá-lo usando o token de atualização.
+  // Isso garante que a sessão esteja sempre válida.
+  await supabase.auth.getUser();
 
-  // Retorna a resposta, possivelmente com os cookies de sessão atualizados.
   return response;
 }
 
-// Configuração que diz ao Next.js para rodar este middleware em todas as rotas,
-// exceto as de arquivos estáticos (imagens, css, etc.).
+// Garante que o middleware rode em todas as rotas necessárias
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    /*
+     * Corresponde a todas as rotas, exceto as de arquivos estáticos,
+     * API (começando com /api/) e a própria rota de autenticação do Next.js.
+     */
+    '/((?!_next/static|_next/image|favicon.ico|api|auth).*)',
   ],
 };
