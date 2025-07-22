@@ -36,8 +36,6 @@ const menuItems = [
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { supabase } = useAuth();
 
   const handleLogout = async () => {
     window.location.href = '/logout';
