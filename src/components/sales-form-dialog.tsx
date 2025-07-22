@@ -62,10 +62,8 @@ export function SalesFormDialog({
   vendaToEdit,
   onSubmit,
 }: SalesFormDialogProps) {
-  const form = useForm<VendaFormValues>({
-    // AGORA CORRETO: Sem 'as any', pois o 'vendaSchema' com 'z.coerce'
-    // gera os tipos corretos que o react-hook-form espera.
-    resolver: zodResolver(vendaSchema),
+  const form = useForm({
+    resolver: zodResolver(vendaSchema), // <-- Adicione 'as any' aqui para evitar conflito de tipos
     defaultValues: {
       cliente: '',
       data: new Date(),
