@@ -34,8 +34,8 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/');
-    } catch (error) {
-      // Removido o tipo 'any' e o nome da variável não utilizada
+    } catch {
+      // CORREÇÃO: Removida a variável 'error' não utilizada
       toast.error('Erro ao fazer login', {
         description: 'Verifique seu e-mail e senha.',
       });
