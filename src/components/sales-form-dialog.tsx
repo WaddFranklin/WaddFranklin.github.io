@@ -110,7 +110,7 @@ export function SalesFormDialog({
     name: 'itens',
   });
 
-  const totalVenda = watchedItens.reduce((acc, item) => {
+  const totalVenda = (watchedItens ?? []).reduce((acc, item) => {
     const preco = item.precoUnitario || 0;
     const qtd = item.quantidade || 0;
     return acc + preco * qtd;
