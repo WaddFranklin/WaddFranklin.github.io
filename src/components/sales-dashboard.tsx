@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './auth-provider';
-import { Venda, VendaFormValues } from '@/lib/types';
+import { Venda, VendaFormValues, ItemVenda } from '@/lib/types';
 import { toast } from 'sonner';
 
 // Importações do Firestore
@@ -15,11 +15,9 @@ import {
   getDocs,
   addDoc,
   updateDoc,
-  // deleteDoc,
   doc,
   Timestamp,
   orderBy,
-  // writeBatch,
 } from 'firebase/firestore';
 
 import { SalesTable } from './sales-table';
@@ -28,21 +26,18 @@ import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
 
 export function SalesDashboard() {
-  const { user } = useAuth(); // Agora só precisamos do 'user'
+  const { user } = useAuth();
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [vendaToEdit, setVendaToEdit] = useState<Venda | null>(null);
 
-  // Função para buscar as vendas do Firestore
   const fetchVendas = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
     try {
-      // Cria uma referência para a coleção 'vendas'
       const vendasCol = collection(db, 'vendas');
-      // Cria uma query para buscar apenas as vendas do usuário logado, ordenadas pela data
       const q = query(
         vendasCol,
         where('userId', '==', user.uid),
@@ -53,7 +48,10 @@ export function SalesDashboard() {
       const vendasData = querySnapshot.docs.map((doc) => {
         const data = doc.data();
         const { totalVenda, totalComissao } = data.itens.reduce(
-          (acc: { totalVenda: number; totalComissao: number }, item: any) => {
+          (
+            acc: { totalVenda: number; totalComissao: number },
+            item: ItemVenda,
+          ) => {
             const subtotal = item.quantidade * item.precoUnitario;
             acc.totalVenda += subtotal;
             acc.totalComissao += subtotal * (item.comissaoPercentual / 100);
@@ -93,7 +91,6 @@ export function SalesDashboard() {
     setIsFormOpen(true);
   };
 
-  // Função para salvar (adicionar ou editar) uma venda no Firestore
   const handleFormSubmit = async (values: VendaFormValues) => {
     if (!user) {
       toast.error('Você precisa estar logado.');
@@ -103,25 +100,22 @@ export function SalesDashboard() {
     try {
       const vendaData = {
         cliente: values.cliente,
-        // Converte a data para o formato Timestamp do Firestore
         data: Timestamp.fromDate(new Date(values.data)),
         itens: values.itens,
-        userId: user.uid, // Armazena o ID do usuário que criou a venda
+        userId: user.uid,
       };
 
       if (vendaToEdit) {
-        // Atualiza um documento existente
         const vendaRef = doc(db, 'vendas', vendaToEdit.id);
         await updateDoc(vendaRef, vendaData);
         toast.success('Venda atualizada com sucesso!');
       } else {
-        // Adiciona um novo documento
         const vendasCol = collection(db, 'vendas');
         await addDoc(vendasCol, vendaData);
         toast.success('Venda registrada com sucesso!');
       }
 
-      fetchVendas(); // Recarrega os dados da tabela
+      fetchVendas();
     } catch (error) {
       console.error('Erro ao salvar venda:', error);
       toast.error('Ocorreu um erro ao salvar a venda.');

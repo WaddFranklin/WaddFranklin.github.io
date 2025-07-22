@@ -1,4 +1,3 @@
-// src/app/signup/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -12,6 +11,7 @@ import { toast } from 'sonner';
 // Importações do Firebase Auth
 import { auth } from '@/lib/firebase/client';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -49,14 +49,12 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      // 1. Cria o usuário com e-mail e senha
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         values.email,
         values.password,
       );
 
-      // 2. Adiciona o nome do usuário ao perfil recém-criado
       await updateProfile(userCredential.user, {
         displayName: values.fullName,
       });
@@ -65,10 +63,16 @@ export default function SignUpPage() {
         description: 'Você será redirecionado para o login.',
       });
       router.push('/login');
-    } catch (error: any) {
-      toast.error('Erro no cadastro', {
-        description: error.message, // Firebase fornece mensagens de erro claras
-      });
+    } catch (error) {
+      if (error instanceof FirebaseError) {
+        toast.error('Erro no cadastro', {
+          description: error.message,
+        });
+      } else {
+        toast.error('Erro no cadastro', {
+          description: 'Ocorreu um erro inesperado.',
+        });
+      }
     } finally {
       setLoading(false);
     }

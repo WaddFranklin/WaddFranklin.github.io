@@ -1,4 +1,3 @@
-// src/app/login/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -34,11 +33,9 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // O AuthProvider vai detectar a mudança de estado e o
-      // ProtectedRoute vai redirecionar para a home.
-      // Mas podemos forçar o redirecionamento aqui também.
       router.push('/');
-    } catch (error: any) {
+    } catch (error) {
+      // Removido o tipo 'any' e o nome da variável não utilizada
       toast.error('Erro ao fazer login', {
         description: 'Verifique seu e-mail e senha.',
       });
