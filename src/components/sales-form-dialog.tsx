@@ -1,3 +1,4 @@
+// components/sales-form-dialog.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -62,7 +63,9 @@ export function SalesFormDialog({
   onSubmit,
 }: SalesFormDialogProps) {
   const form = useForm<VendaFormValues>({
-    resolver: zodResolver(vendaSchema), // Removido o 'as any'
+    // CORREÇÃO: Readicionando a coerção de tipo 'as any' para resolver
+    // a incompatibilidade de inferência de tipos no build da Vercel.
+    resolver: zodResolver(vendaSchema) as any,
     defaultValues: {
       cliente: '',
       data: new Date(),
