@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Venda, VendaFormValues, vendaSchema } from '@/lib/types';
+import { Timestamp } from 'firebase/firestore'; // Importe o Timestamp
 
 import { Button } from '@/components/ui/button';
 import {
@@ -63,7 +64,6 @@ export function SalesFormDialog({
   onSubmit,
 }: SalesFormDialogProps) {
   const form = useForm<VendaFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(vendaSchema) as any,
     defaultValues: {
       cliente: '',
@@ -84,7 +84,8 @@ export function SalesFormDialog({
       if (vendaToEdit) {
         form.reset({
           cliente: vendaToEdit.cliente,
-          data: new Date(vendaToEdit.data),
+          // Converte o Timestamp para um objeto Date que o input entende
+          data: vendaToEdit.data.toDate(),
           itens: vendaToEdit.itens,
         });
       } else {

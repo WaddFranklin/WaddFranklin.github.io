@@ -1,13 +1,16 @@
-"use client";
+// src/app/login/page.tsx
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-// ATUALIZADO: Importa do novo caminho
-import { createClient } from "@/lib/supabase/client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { toast } from 'sonner';
 
-import { Button } from "@/components/ui/button";
-// ... (outras importações do Shadcn)
+// Importações do Firebase Auth
+import { auth } from '@/lib/firebase/client';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -15,41 +18,35 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      // ATUALIZADO: router.refresh() notifica o middleware para atualizar a sessão.
-      router.refresh();
-      router.push("/");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // O AuthProvider vai detectar a mudança de estado e o
+      // ProtectedRoute vai redirecionar para a home.
+      // Mas podemos forçar o redirecionamento aqui também.
+      router.push('/');
+    } catch (error: any) {
+      toast.error('Erro ao fazer login', {
+        description: 'Verifique seu e-mail e senha.',
+      });
+    } finally {
       setLoading(false);
     }
   };
-  
-  // ... (o resto do JSX do formulário permanece igual)
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-sm">
@@ -83,18 +80,15 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            {error && (
-                <div className="text-red-500 text-sm text-center">{error}</div>
-            )}
           </CardContent>
           <CardFooter className="mt-4">
             <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar"}
+              {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </CardFooter>
         </form>
         <div className="mt-4 text-center text-sm">
-          Não tem uma conta?{" "}
+          Não tem uma conta?{' '}
           <Link href="/signup" className="underline">
             Cadastre-se
           </Link>

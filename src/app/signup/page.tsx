@@ -1,16 +1,19 @@
 // src/app/signup/page.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { signUpSchema, SignUpFormValues } from "@/lib/types";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { signUpSchema, SignUpFormValues } from '@/lib/types';
+import { toast } from 'sonner';
 
-import { Button } from "@/components/ui/button";
+// Importações do Firebase Auth
+import { auth } from '@/lib/firebase/client';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -18,57 +21,57 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 
 export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
+      fullName: '',
+      email: '',
+      password: '',
     },
   });
 
   const handleSignUp = async (values: SignUpFormValues) => {
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        // Passa os dados extras que nosso trigger no banco de dados irá usar
-        data: {
-          full_name: values.fullName,
-        },
-      },
-    });
+    try {
+      // 1. Cria o usuário com e-mail e senha
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        values.email,
+        values.password,
+      );
 
-    if (error) {
-      toast.error("Erro no cadastro", {
-        description: error.message,
+      // 2. Adiciona o nome do usuário ao perfil recém-criado
+      await updateProfile(userCredential.user, {
+        displayName: values.fullName,
       });
-    } else {
-      toast.success("Cadastro realizado!", {
-        description: "Verifique seu e-mail para confirmar sua conta e fazer o login.",
+
+      toast.success('Cadastro realizado com sucesso!', {
+        description: 'Você será redirecionado para o login.',
       });
-      // Redireciona para a página de login após o sucesso
-      router.push("/login");
+      router.push('/login');
+    } catch (error: any) {
+      toast.error('Erro no cadastro', {
+        description: error.message, // Firebase fornece mensagens de erro claras
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -103,7 +106,11 @@ export default function SignUpPage() {
                   <FormItem>
                     <Label>E-mail</Label>
                     <FormControl>
-                      <Input type="email" placeholder="seu@email.com" {...field} />
+                      <Input
+                        type="email"
+                        placeholder="seu@email.com"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,7 +123,11 @@ export default function SignUpPage() {
                   <FormItem>
                     <Label>Senha</Label>
                     <FormControl>
-                      <Input type="password" placeholder="********" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="********"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,13 +136,13 @@ export default function SignUpPage() {
             </CardContent>
             <CardFooter className="mt-4 flex flex-col gap-4">
               <Button className="w-full" type="submit" disabled={loading}>
-                {loading ? "Criando conta..." : "Criar conta"}
+                {loading ? 'Criando conta...' : 'Criar conta'}
               </Button>
             </CardFooter>
           </form>
         </Form>
         <div className="text-center text-sm">
-          Já tem uma conta?{" "}
+          Já tem uma conta?{' '}
           <Link href="/login" className="underline">
             Fazer login
           </Link>

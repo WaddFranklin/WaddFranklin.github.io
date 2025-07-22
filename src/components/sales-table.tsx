@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Venda } from '@/lib/types';
+import { Timestamp } from 'firebase/firestore'; // Importe o Timestamp
 import {
   Table,
   TableBody,
@@ -23,11 +24,20 @@ import { SalesActions } from './sales-actions';
 interface SalesTableProps {
   data: Venda[];
   onEdit: (venda: Venda) => void;
-  onDataChange: () => void; // Prop para notificar sobre mudanças nos dados
+  onDataChange: () => void;
 }
 
-const formatDate = (isoString: string) => {
-  return new Date(isoString).toLocaleDateString('pt-BR', {
+const formatDate = (date: Date | Timestamp | string) => {
+  // O Timestamp do Firestore tem um método toDate()
+  if (date instanceof Timestamp) {
+    return date.toDate().toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+  // Fallback para strings ou objetos Date
+  return new Date(date).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

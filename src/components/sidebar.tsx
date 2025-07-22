@@ -2,7 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+
+// Importações do Firebase
+import { auth } from '@/lib/firebase/client';
+import { signOut } from 'firebase/auth';
+
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -17,8 +23,8 @@ import {
   History,
   LogOut,
   FileText,
-  Menu, // Ícone de Hamburger
-  PanelLeft, // Ícone para expandir/recolher
+  Menu,
+  PanelLeft,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,10 +41,16 @@ const menuItems = [
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      toast.error('Erro ao tentar sair.');
+      console.error(error);
+    }
   };
 
   return (
@@ -49,14 +61,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           isCollapsed ? 'w-16' : 'w-64',
         )}
       >
-        {/* Cabeçalho do Sidebar com o botão de toggle */}
         <div className="flex h-16 items-center border-b px-4">
           <Link
             href="/"
             className="flex items-center gap-2 font-semibold"
             onClick={() => setIsCollapsed(false)}
           >
-            {/* Opcional: Adicionar um logo que aparece quando expandido */}
             {!isCollapsed && <span className="ml-2">AppVendas</span>}
           </Link>
           <Button

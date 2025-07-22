@@ -2,7 +2,9 @@
 
 import { Venda } from '@/lib/types';
 import { toast } from 'sonner';
-import { useAuth } from './auth-provider';
+
+import { db } from '@/lib/firebase/client';
+import { doc, deleteDoc } from 'firebase/firestore';
 
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,7 +30,7 @@ import {
 interface SalesActionsProps {
   venda: Venda;
   onEdit: () => void;
-  onDataChange: () => void; // Prop para notificar sobre mudanças nos dados
+  onDataChange: () => void;
 }
 
 export function SalesActions({
@@ -36,17 +38,18 @@ export function SalesActions({
   onEdit,
   onDataChange,
 }: SalesActionsProps) {
-  const { supabase } = useAuth();
-
   const handleDelete = async () => {
-    const { error } = await supabase.from('vendas').delete().eq('id', venda.id);
+    try {
+      // Cria uma referência ao documento específico que queremos deletar
+      const vendaRef = doc(db, 'vendas', venda.id);
+      // Deleta o documento
+      await deleteDoc(vendaRef);
 
-    if (error) {
+      toast.success('Venda excluída com sucesso!');
+      onDataChange(); // Notifica o componente pai para recarregar os dados
+    } catch (error) {
       toast.error('Erro ao excluir a venda.');
       console.error(error);
-    } else {
-      toast.success('Venda excluída com sucesso!');
-      onDataChange(); // Chama a função para recarregar os dados
     }
   };
 

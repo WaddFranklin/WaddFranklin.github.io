@@ -1,20 +1,17 @@
-// lib/types.ts
+// src/lib/types.ts
 import { z } from 'zod';
+import { Timestamp } from 'firebase/firestore'; // Importa o tipo Timestamp do Firebase
 
-// O itemSchema não precisa de alterações.
 export const itemSchema = z.object({
   farinha: z.string().min(1, { message: 'Selecione uma farinha.' }),
-
   quantidade: z.preprocess(
     (val) => Number(String(val).trim() || 0),
     z.number().min(1, { message: 'A qtd. deve ser no mínimo 1.' }),
   ),
-
   precoUnitario: z.preprocess(
     (val) => Number(String(val).trim() || 0),
     z.number().min(0.01, { message: 'O preço deve ser positivo.' }),
   ),
-
   comissaoPercentual: z.preprocess(
     (val) => Number(String(val).trim() || 0),
     z
@@ -25,43 +22,36 @@ export const itemSchema = z.object({
   ),
 });
 
-// Schema da venda com a correção definitiva para o campo 'data'
 export const vendaSchema = z.object({
   cliente: z.string().min(3, { message: 'O nome do cliente é obrigatório.' }),
-
-  // SOLUÇÃO: Usar z.preprocess para a data, tornando a conversão explícita e segura.
-  // Isso resolve o conflito de tipos no build da Vercel.
-  data: z
-    .preprocess((arg) => {
-      if (typeof arg === 'string' || arg instanceof Date) return new Date(arg);
-      return new Date(); // Fallback para data atual se o valor for inválido
-    }, z.date())
-    .refine((date) => !!date, { message: 'A data é obrigatória.' }),
-
+  // O campo data agora pode ser do tipo Date ou Timestamp do Firebase
+  data: z.union([z.date(), z.instanceof(Timestamp)]),
   itens: z
     .array(itemSchema)
     .min(1, { message: 'A venda deve ter pelo menos um item.' }),
 });
 
-// Os tipos abaixo são atualizados automaticamente pela inferência do Zod.
 export type ItemVenda = z.infer<typeof itemSchema>;
 export type VendaFormValues = z.infer<typeof vendaSchema>;
 
+// Este será o nosso tipo principal para representar uma venda vinda do Firestore
 export type Venda = {
-  id: string;
+  id: string; // ID do documento no Firestore
   cliente: string;
-  data: string; // Continuamos salvando como string (formato ISO) no Firestore.
+  data: Timestamp; // Usaremos o tipo Timestamp do Firebase para datas
   itens: ItemVenda[];
   totalVenda: number;
   totalComissao: number;
-  userId: string;
+  userId: string; // Para saber qual usuário criou a venda
 };
 
-// --- NOVO SCHEMA PARA O CADASTRO DE USUÁRIO ---
+// --- SCHEMA DE CADASTRO DE USUÁRIO (permanece o mesmo) ---
 export const signUpSchema = z.object({
-    fullName: z.string().min(3, { message: "O nome completo é obrigatório." }),
-    email: z.email({ message: "Por favor, insira um e-mail válido." }),
-    password: z.string().min(8, { message: "A senha deve ter pelo menos 8 caracteres." }),
+  fullName: z.string().min(3, { message: 'O nome completo é obrigatório.' }),
+  email: z.email({ message: 'Por favor, insira um e-mail válido.' }),
+  password: z
+    .string()
+    .min(8, { message: 'A senha deve ter pelo menos 8 caracteres.' }),
 });
 
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
