@@ -25,8 +25,16 @@ export const itemSchema = z.object({
 export const vendaSchema = z.object({
   cliente: z.string().min(3, { message: 'O nome do cliente é obrigatório.' }),
 
-  // z.coerce.date() converte a string do input type="date" para um objeto Date.
-  data: z.coerce.date({ invalid_type_error: 'A data é obrigatória.' }),
+  // Use z.preprocess para garantir que o tipo seja sempre Date
+  data: z.preprocess(
+    (arg) => {
+      if (typeof arg === 'string' || arg instanceof Date) return new Date(arg);
+      return new Date();
+    },
+    z.date().refine((d) => d instanceof Date && !isNaN(d.getTime()), {
+      message: 'A data é obrigatória.',
+    }),
+  ),
 
   itens: z
     .array(itemSchema)
