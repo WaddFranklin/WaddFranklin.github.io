@@ -8,15 +8,15 @@ export const itemSchema = z.object({
   farinha: z.string().min(1, { message: 'Selecione uma farinha.' }),
 
   quantidade: z.coerce
-    .number({ invalid_type_error: 'Deve ser um número.' })
+    .number({ message: 'Deve ser um número.' })
     .min(1, { message: 'A qtd. deve ser no mínimo 1.' }),
 
   precoUnitario: z.coerce
-    .number({ invalid_type_error: 'Deve ser um número.' })
+    .number({ message: 'Deve ser um número.' })
     .min(0.01, { message: 'O preço deve ser positivo.' }),
 
   comissaoPercentual: z.coerce
-    .number({ invalid_type_error: 'Deve ser um número.' })
+    .number({ message: 'Deve ser um número.' })
     .min(0, { message: 'Comissão não pode ser negativa.' })
     .max(100, { message: 'Comissão não pode ser maior que 100.' })
     .default(0),
