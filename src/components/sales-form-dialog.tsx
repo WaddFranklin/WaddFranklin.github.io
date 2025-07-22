@@ -111,8 +111,8 @@ export function SalesFormDialog({
   });
 
   const totalVenda = (watchedItens ?? []).reduce((acc, item) => {
-    const preco = item.precoUnitario || 0;
-    const qtd = item.quantidade || 0;
+    const preco = Number(item.precoUnitario) || 0;
+    const qtd = Number(item.quantidade) || 0;
     return acc + preco * qtd;
   }, 0);
 
