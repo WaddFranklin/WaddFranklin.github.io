@@ -63,9 +63,9 @@ export function SalesFormDialog({
   onSubmit,
 }: SalesFormDialogProps) {
   const form = useForm<VendaFormValues>({
-    // CORREÇÃO: Readicionando a coerção de tipo 'as any' para resolver
-    // a incompatibilidade de inferência de tipos no build da Vercel.
-    resolver: zodResolver(vendaSchema) as any,
+    // AGORA CORRETO: Sem 'as any', pois o 'vendaSchema' com 'z.coerce'
+    // gera os tipos corretos que o react-hook-form espera.
+    resolver: zodResolver(vendaSchema),
     defaultValues: {
       cliente: '',
       data: new Date(),
