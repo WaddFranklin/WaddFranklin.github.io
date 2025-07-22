@@ -40,8 +40,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const { supabase } = useAuth();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
+    window.location.href = '/logout';
   };
 
   return (
