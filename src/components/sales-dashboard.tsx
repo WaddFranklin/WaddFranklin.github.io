@@ -100,7 +100,9 @@ export function SalesDashboard() {
     try {
       const vendaData = {
         cliente: values.cliente,
-        data: Timestamp.fromDate(new Date(values.data)),
+        // CORREÇÃO: values.data já é um objeto Date vindo do formulário.
+        // A conversão `new Date()` era desnecessária e causava o erro.
+        data: Timestamp.fromDate(values.data as Date),
         itens: values.itens,
         userId: user.uid,
       };
