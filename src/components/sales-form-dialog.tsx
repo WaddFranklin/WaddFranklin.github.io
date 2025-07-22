@@ -218,7 +218,19 @@ export function SalesFormDialog({
                           <FormItem>
                             <FormLabel>Quantidade</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input
+                                type="number"
+                                value={
+                                  field.value === undefined ||
+                                  field.value === null
+                                    ? ''
+                                    : Number(field.value)
+                                }
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -231,7 +243,20 @@ export function SalesFormDialog({
                           <FormItem>
                             <FormLabel>Preço Unit. (R$)</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" {...field} />
+                              <Input
+                                type="number"
+                                value={
+                                  field.value === undefined ||
+                                  field.value === null
+                                    ? ''
+                                    : Number(field.value)
+                                }
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                                step="0.01"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -244,7 +269,19 @@ export function SalesFormDialog({
                           <FormItem>
                             <FormLabel>Comissão (%)</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input
+                                type="number"
+                                value={
+                                  field.value === undefined ||
+                                  field.value === null
+                                    ? ''
+                                    : Number(field.value)
+                                }
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
