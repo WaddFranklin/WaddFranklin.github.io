@@ -3,7 +3,6 @@
 
 import { useState } from 'react';
 import ProtectedRoute from '@/components/protected-route';
-import Header from '@/components/header';
 import { Sidebar } from '@/components/sidebar';
 import { FloursDashboard } from '@/components/flours-dashboard'; // Componente que vamos criar
 

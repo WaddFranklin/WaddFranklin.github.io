@@ -63,8 +63,8 @@ export function SalesFormDialog({
   const { user } = useAuth(); // Acede ao utilizador logado
   const [farinhasDisponiveis, setFarinhasDisponiveis] = useState<Farinha[]>([]); // Estado para armazenar as farinhas
 
-  const form = useForm<VendaFormValues>({
-    resolver: zodResolver(vendaSchema) as any,
+  const form = useForm({
+    resolver: zodResolver(vendaSchema),
     defaultValues: {
       cliente: '',
       data: new Date(),
