@@ -2,59 +2,82 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useAuth } from './auth-provider';
-import { menuItems } from './nav-menu'; // Importa os itens de menu
+import { menuItems } from './nav-menu';
+import { auth } from '@/lib/firebase/client';
+import { signOut } from 'firebase/auth';
+
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 
 export default function Header() {
   const { user } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      toast.error('Erro ao tentar sair.');
+      console.error(error);
+    }
+  };
 
   return (
-    <header className="flex items-center justify-between mb-6 pb-4 border-b">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard de Vendas</h1>
-        {user && (
-          <p className="text-sm text-muted-foreground">
-            Bem-vindo, {user.displayName || user.email}
-          </p>
-        )}
-      </div>
-
+    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
       {/* --- INÍCIO DO MENU MOBILE --- */}
-      <div className="sm:hidden">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button size="icon" variant="outline">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Abrir menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <nav className="grid gap-2 text-lg font-medium">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" className="shrink-0 sm:hidden">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Abrir menu de navegação</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="flex flex-col">
+          <nav className="grid gap-2 text-lg font-medium">
+            <Link
+              href="#"
+              className="flex items-center gap-2 text-lg font-semibold mb-4"
+            >
+              <span>AppVendas</span>
+            </Link>
+            {menuItems.map(({ href, label, icon: Icon }) => (
               <Link
-                href="#"
-                className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                key={label}
+                href={href}
+                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
               >
-                {/* Pode adicionar um ícone ou iniciais aqui */}
-                <span className="sr-only">AppVendas</span>
+                <Icon className="h-5 w-5" />
+                {label}
               </Link>
-              {menuItems.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Icon className="h-5 w-5" />
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
-      </div>
+            ))}
+          </nav>
+          <div className="mt-auto">
+             <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-4 h-5 w-5" />
+                Sair
+              </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
       {/* --- FIM DO MENU MOBILE --- */}
+
+      <div className="w-full flex-1 text-center sm:text-left">
+         <h1 className="text-2xl font-bold">Dashboard de Vendas</h1>
+         {user && (
+           <p className="text-sm text-muted-foreground">
+             Bem-vindo, {user.displayName || user.email}
+           </p>
+         )}
+      </div>
     </header>
   );
 }

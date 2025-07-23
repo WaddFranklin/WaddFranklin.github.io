@@ -24,8 +24,6 @@ interface SidebarProps {
   setIsCollapsed: (value: boolean) => void;
 }
 
-// A constante menuItems foi movida para nav-menu.ts
-
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
