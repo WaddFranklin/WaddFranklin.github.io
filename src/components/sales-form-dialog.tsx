@@ -244,7 +244,12 @@ export function SalesFormDialog({
                           <FormItem>
                             <FormLabel>Quantidade</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input 
+                                value={field.value !== undefined ? String(field.value) : ''}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -260,7 +265,11 @@ export function SalesFormDialog({
                               <Input
                                 type="number"
                                 step="0.01"
-                                {...field}
+                                value={field.value !== undefined ? String(field.value) : ''}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
                               />
                             </FormControl>
                             <FormMessage />
@@ -276,7 +285,11 @@ export function SalesFormDialog({
                             <FormControl>
                               <Input
                                 type="number"
-                                {...field}
+                                value={field.value !== undefined ? String(field.value) : ''}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
                               />
                             </FormControl>
                             <FormMessage />
