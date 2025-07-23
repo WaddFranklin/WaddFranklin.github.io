@@ -1,10 +1,13 @@
 // components/sales-form-dialog.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Venda, VendaFormValues, vendaSchema } from '@/lib/types';
+import { Venda, VendaFormValues, vendaSchema, Farinha } from '@/lib/types';
+import { useAuth } from './auth-provider'; // Importa o useAuth para aceder ao user
+import { db } from '@/lib/firebase/client'; // Importa a instância do db
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'; // Importa funções do Firestore
 
 import { Button } from '@/components/ui/button';
 import {
@@ -35,12 +38,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, PlusCircle } from 'lucide-react';
 
-const farinhasDisponiveis = [
-  'Vó zane extra clara 0000',
-  'Vó zane panificação premium',
-  'Pré-mistura Vó zane extra clara 0000',
-  'Hermann pães especiais',
-];
+// A lista estática de farinhas foi removida daqui
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -62,8 +60,11 @@ export function SalesFormDialog({
   vendaToEdit,
   onSubmit,
 }: SalesFormDialogProps) {
-  const form = useForm({
-    resolver: zodResolver(vendaSchema), // <-- Adicione 'as any' aqui para evitar conflito de tipos
+  const { user } = useAuth(); // Acede ao utilizador logado
+  const [farinhasDisponiveis, setFarinhasDisponiveis] = useState<Farinha[]>([]); // Estado para armazenar as farinhas
+
+  const form = useForm<VendaFormValues>({
+    resolver: zodResolver(vendaSchema) as any,
     defaultValues: {
       cliente: '',
       data: new Date(),
@@ -77,6 +78,29 @@ export function SalesFormDialog({
     control: form.control,
     name: 'itens',
   });
+  
+  // Efeito para buscar as farinhas do Firestore quando o diálogo abrir
+  useEffect(() => {
+    const fetchFarinhas = async () => {
+      if (user && isOpen) {
+        const farinhasCol = collection(db, 'farinhas');
+        const q = query(
+            farinhasCol,
+            where('userId', '==', user.uid),
+            orderBy('nome', 'asc')
+        );
+        const querySnapshot = await getDocs(q);
+        const farinhasData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Farinha));
+        setFarinhasDisponiveis(farinhasData);
+      }
+    };
+
+    fetchFarinhas();
+  }, [user, isOpen]);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -199,9 +223,10 @@ export function SalesFormDialog({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                              {/* Popula o select com os dados do Firestore */}
                               {farinhasDisponiveis.map((farinha) => (
-                                <SelectItem key={farinha} value={farinha}>
-                                  {farinha}
+                                <SelectItem key={farinha.id} value={farinha.nome}>
+                                  {farinha.nome}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -211,26 +236,15 @@ export function SalesFormDialog({
                       )}
                     />
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField
+                      {/* ... outros FormFields dos itens (quantidade, preco, etc.) sem alterações ... */}
+                       <FormField
                         control={form.control}
                         name={`itens.${index}.quantidade`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Quantidade</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
-                                value={
-                                  field.value === undefined ||
-                                  field.value === null
-                                    ? ''
-                                    : Number(field.value)
-                                }
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
+                              <Input type="number" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -245,17 +259,8 @@ export function SalesFormDialog({
                             <FormControl>
                               <Input
                                 type="number"
-                                value={
-                                  field.value === undefined ||
-                                  field.value === null
-                                    ? ''
-                                    : Number(field.value)
-                                }
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
                                 step="0.01"
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
@@ -271,16 +276,7 @@ export function SalesFormDialog({
                             <FormControl>
                               <Input
                                 type="number"
-                                value={
-                                  field.value === undefined ||
-                                  field.value === null
-                                    ? ''
-                                    : Number(field.value)
-                                }
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />

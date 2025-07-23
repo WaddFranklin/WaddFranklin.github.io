@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-// Importações do Firebase
 import { auth } from '@/lib/firebase/client';
 import { signOut } from 'firebase/auth';
+import { menuItems } from './nav-menu'; // Importa os itens do menu
 
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
@@ -17,27 +17,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  LayoutDashboard,
-  User,
-  History,
-  LogOut,
-  FileText,
-  Menu,
-  PanelLeft,
-} from 'lucide-react';
+import { LogOut, Menu, PanelLeft } from 'lucide-react';
 
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
 }
 
-const menuItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '#', label: 'Minhas Vendas', icon: FileText },
-  { href: '#', label: 'Histórico', icon: History },
-  { href: '#', label: 'Meu Perfil', icon: User },
-];
+// A constante menuItems foi movida para nav-menu.ts
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();

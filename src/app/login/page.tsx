@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 // Importações do Firebase Auth
 import { auth } from '@/lib/firebase/client';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app'; // Importa o tipo de erro específico
 
 import { Button } from '@/components/ui/button';
 import {
@@ -34,10 +35,23 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/');
-    } catch {
-      // CORREÇÃO: Removida a variável 'error' não utilizada
+    } catch (error) {
+      // Agora capturamos o erro e o exibimos de forma útil
+      console.error('Firebase Login Error:', error); // Log para o console do navegador
+      let description = 'Verifique seu e-mail e senha.';
+      if (error instanceof FirebaseError) {
+        // Mapeia os erros mais comuns do Firebase para mensagens amigáveis
+        if (error.code === 'auth/invalid-credential') {
+          description = 'Credenciais inválidas. Por favor, verifique seu e-mail e senha.';
+        } else if (error.code === 'auth/user-not-found') {
+          description = 'Nenhum utilizador encontrado com este e-mail.';
+        } else if (error.code === 'auth/wrong-password') {
+            description = 'Senha incorreta. Por favor, tente novamente.';
+        }
+      }
+      
       toast.error('Erro ao fazer login', {
-        description: 'Verifique seu e-mail e senha.',
+        description: description,
       });
     } finally {
       setLoading(false);

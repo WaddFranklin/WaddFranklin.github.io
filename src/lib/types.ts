@@ -1,9 +1,22 @@
-// lib/types.ts
+// src/lib/types.ts
 import { z } from 'zod';
 import { Timestamp } from 'firebase/firestore';
 
-// Usamos z.coerce para converter os valores do formulário (que chegam como string)
-// para os tipos corretos (number), mantendo a inferência de tipo para o TypeScript.
+// --- NOVO SCHEMA PARA FARINHA ---
+export const farinhaSchema = z.object({
+  nome: z.string().min(3, { message: 'O nome da farinha é obrigatório.' }),
+});
+
+export type FarinhaFormValues = z.infer<typeof farinhaSchema>;
+
+export type Farinha = {
+  id: string; // ID do documento no Firestore
+  nome: string;
+  userId: string; // Para saber qual usuário cadastrou
+};
+
+// --- SCHEMAS EXISTENTES ---
+
 export const itemSchema = z.object({
   farinha: z.string().min(1, { message: 'Selecione uma farinha.' }),
 
@@ -25,7 +38,6 @@ export const itemSchema = z.object({
 export const vendaSchema = z.object({
   cliente: z.string().min(3, { message: 'O nome do cliente é obrigatório.' }),
 
-  // Use z.preprocess para garantir que o tipo seja sempre Date
   data: z.preprocess(
     (arg) => {
       if (typeof arg === 'string' || arg instanceof Date) return new Date(arg);
@@ -54,7 +66,6 @@ export type Venda = {
   userId: string;
 };
 
-// --- SCHEMA DE CADASTRO DE USUÁRIO (permanece o mesmo) ---
 export const signUpSchema = z.object({
   fullName: z.string().min(3, { message: 'O nome completo é obrigatório.' }),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
