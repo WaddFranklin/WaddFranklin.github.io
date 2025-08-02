@@ -3,10 +3,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './auth-provider';
-import { Venda, VendaFormValues, ItemVenda } from '@/lib/types';
+import {
+  Venda,
+  VendaFormValues,
+  ItemVenda,
+  Cliente,
+  Padaria,
+} from '@/lib/types'; // Adicionado Cliente e Padaria
 import { toast } from 'sonner';
 
-// Importações do Firestore
 import { db } from '@/lib/firebase/client';
 import {
   collection,
@@ -32,20 +37,43 @@ export function SalesDashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [vendaToEdit, setVendaToEdit] = useState<Venda | null>(null);
 
-  const fetchVendas = useCallback(async () => {
+  // Armazenaremos os clientes e padarias em cache para evitar buscas repetidas
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [padarias, setPadarias] = useState<Padaria[]>([]);
+
+  const fetchVendasEComplementos = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
     try {
+      // Busca de Clientes
+      const clientesCol = collection(db, 'clientes');
+      const qClientes = query(clientesCol, where('userId', '==', user.uid));
+      const clientesSnap = await getDocs(qClientes);
+      const clientesData = clientesSnap.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Cliente),
+      );
+      setClientes(clientesData);
+
+      // Busca de Padarias
+      const padariasCol = collection(db, 'padarias');
+      const qPadarias = query(padariasCol, where('userId', '==', user.uid));
+      const padariasSnap = await getDocs(qPadarias);
+      const padariasData = padariasSnap.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Padaria),
+      );
+      setPadarias(padariasData);
+
+      // Busca de Vendas
       const vendasCol = collection(db, 'vendas');
-      const q = query(
+      const qVendas = query(
         vendasCol,
         where('userId', '==', user.uid),
         orderBy('data', 'desc'),
       );
 
-      const querySnapshot = await getDocs(q);
-      const vendasData = querySnapshot.docs.map((doc) => {
+      const vendasSnapshot = await getDocs(qVendas);
+      const vendasData = vendasSnapshot.docs.map((doc) => {
         const data = doc.data();
         const { totalVenda, totalComissao } = data.itens.reduce(
           (
@@ -70,16 +98,16 @@ export function SalesDashboard() {
 
       setVendas(vendasData);
     } catch (error) {
-      console.error('Erro ao buscar vendas:', error);
-      toast.error('Não foi possível carregar as vendas.');
+      console.error('Erro ao buscar dados:', error);
+      toast.error('Não foi possível carregar os dados.');
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    fetchVendas();
-  }, [fetchVendas]);
+    fetchVendasEComplementos();
+  }, [fetchVendasEComplementos]);
 
   const handleOpenEditDialog = (venda: Venda) => {
     setVendaToEdit(venda);
@@ -98,14 +126,35 @@ export function SalesDashboard() {
     }
 
     try {
+      // --- INÍCIO DA CORREÇÃO ---
+      // 1. Encontrar o cliente selecionado na nossa lista em cache
+      const clienteSelecionado = clientes.find(
+        (c) => c.id === values.clienteId,
+      );
+      if (!clienteSelecionado) {
+        toast.error('Cliente selecionado não foi encontrado.');
+        return;
+      }
+
+      // 2. Encontrar a padaria associada a esse cliente
+      const padariaAssociada = padarias.find(
+        (p) => p.id === clienteSelecionado.padariaId,
+      );
+      if (!padariaAssociada) {
+        toast.error('Padaria do cliente não foi encontrada.');
+        return;
+      }
+
+      // 3. Montar o objeto completo da venda
       const vendaData = {
-        cliente: values.cliente,
-        // CORREÇÃO: values.data já é um objeto Date vindo do formulário.
-        // A conversão `new Date()` era desnecessária e causava o erro.
+        clienteId: values.clienteId,
+        clienteNome: clienteSelecionado.nome, // Adicionado
+        padariaNome: padariaAssociada.nome, // Adicionado
         data: Timestamp.fromDate(values.data as Date),
         itens: values.itens,
         userId: user.uid,
       };
+      // --- FIM DA CORREÇÃO ---
 
       if (vendaToEdit) {
         const vendaRef = doc(db, 'vendas', vendaToEdit.id);
@@ -117,7 +166,8 @@ export function SalesDashboard() {
         toast.success('Venda registrada com sucesso!');
       }
 
-      fetchVendas();
+      // Recarrega todos os dados
+      fetchVendasEComplementos();
     } catch (error) {
       console.error('Erro ao salvar venda:', error);
       toast.error('Ocorreu um erro ao salvar a venda.');
@@ -149,7 +199,7 @@ export function SalesDashboard() {
       <SalesTable
         data={vendas}
         onEdit={handleOpenEditDialog}
-        onDataChange={fetchVendas}
+        onDataChange={fetchVendasEComplementos}
       />
     </div>
   );

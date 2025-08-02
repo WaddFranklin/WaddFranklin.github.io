@@ -1,13 +1,20 @@
-// components/sales-form-dialog.tsx
+// src/components/sales-form-dialog.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Venda, VendaFormValues, vendaSchema, Farinha } from '@/lib/types';
-import { useAuth } from './auth-provider'; // Importa o useAuth para aceder ao user
-import { db } from '@/lib/firebase/client'; // Importa a instância do db
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'; // Importa funções do Firestore
+import {
+  Venda,
+  VendaFormValues,
+  vendaSchema,
+  Farinha,
+  Cliente,
+} from '@/lib/types';
+import { useAuth } from './auth-provider';
+import { db } from '@/lib/firebase/client';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -37,8 +44,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, PlusCircle } from 'lucide-react';
-
-// A lista estática de farinhas foi removida daqui
+// Importe o novo componente Combobox
+import { Combobox } from '@/components/ui/combobox';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -46,6 +53,10 @@ const formatCurrency = (value: number) => {
     currency: 'BRL',
   }).format(value);
 };
+
+interface ClienteComPadaria extends Cliente {
+  padariaNome: string;
+}
 
 interface SalesFormDialogProps {
   vendaToEdit?: Venda | null;
@@ -60,13 +71,16 @@ export function SalesFormDialog({
   vendaToEdit,
   onSubmit,
 }: SalesFormDialogProps) {
-  const { user } = useAuth(); // Acede ao utilizador logado
-  const [farinhasDisponiveis, setFarinhasDisponiveis] = useState<Farinha[]>([]); // Estado para armazenar as farinhas
+  const { user } = useAuth();
+  const [farinhasDisponiveis, setFarinhasDisponiveis] = useState<Farinha[]>([]);
+  const [clientesDisponiveis, setClientesDisponiveis] = useState<
+    ClienteComPadaria[]
+  >([]);
 
-  const form = useForm({
+  const form = useForm<VendaFormValues>({
     resolver: zodResolver(vendaSchema),
     defaultValues: {
-      cliente: '',
+      clienteId: '',
       data: new Date(),
       itens: [
         { farinha: '', quantidade: 1, precoUnitario: 0, comissaoPercentual: 0 },
@@ -78,41 +92,67 @@ export function SalesFormDialog({
     control: form.control,
     name: 'itens',
   });
-  
-  // Efeito para buscar as farinhas do Firestore quando o diálogo abrir
+
   useEffect(() => {
-    const fetchFarinhas = async () => {
+    const fetchData = async () => {
       if (user && isOpen) {
-        const farinhasCol = collection(db, 'farinhas');
-        const q = query(
+        try {
+          const farinhasCol = collection(db, 'farinhas');
+          const qFarinhas = query(
             farinhasCol,
             where('userId', '==', user.uid),
-            orderBy('nome', 'asc')
-        );
-        const querySnapshot = await getDocs(q);
-        const farinhasData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Farinha));
-        setFarinhasDisponiveis(farinhasData);
+            orderBy('nome', 'asc'),
+          );
+          const farinhasSnapshot = await getDocs(qFarinhas);
+          setFarinhasDisponiveis(
+            farinhasSnapshot.docs.map(
+              (doc) => ({ id: doc.id, ...doc.data() } as Farinha),
+            ),
+          );
+
+          const padariasCol = collection(db, 'padarias');
+          const qPadarias = query(padariasCol, where('userId', '==', user.uid));
+          const padariasSnapshot = await getDocs(qPadarias);
+          const padariasMap = new Map(
+            padariasSnapshot.docs.map((doc) => [doc.id, doc.data().nome]),
+          );
+
+          const clientesCol = collection(db, 'clientes');
+          const qClientes = query(
+            clientesCol,
+            where('userId', '==', user.uid),
+            orderBy('nome', 'asc'),
+          );
+          const clientesSnapshot = await getDocs(qClientes);
+          const clientesData = clientesSnapshot.docs.map((doc) => {
+            const cliente = { id: doc.id, ...doc.data() } as Cliente;
+            return {
+              ...cliente,
+              padariaNome:
+                padariasMap.get(cliente.padariaId) || 'Padaria não encontrada',
+            };
+          });
+          setClientesDisponiveis(clientesData);
+        } catch (error) {
+          console.error('Erro ao buscar dados para o formulário:', error);
+          toast.error('Não foi possível carregar os dados de apoio.');
+        }
       }
     };
-
-    fetchFarinhas();
+    fetchData();
   }, [user, isOpen]);
-
 
   useEffect(() => {
     if (isOpen) {
       if (vendaToEdit) {
         form.reset({
-          cliente: vendaToEdit.cliente,
+          clienteId: vendaToEdit.clienteId,
           data: vendaToEdit.data.toDate(),
           itens: vendaToEdit.itens,
         });
       } else {
         form.reset({
-          cliente: '',
+          clienteId: '',
           data: new Date(),
           itens: [
             {
@@ -162,14 +202,24 @@ export function SalesFormDialog({
               className="space-y-6"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* SUBSTITUINDO O SELECT PELO COMBOBOX */}
                 <FormField
                   control={form.control}
-                  name="cliente"
+                  name="clienteId"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome do Cliente</FormLabel>
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Cliente</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Padaria do Zé" {...field} />
+                        <Combobox
+                          placeholder="Selecione um cliente"
+                          emptyMessage="Nenhum cliente encontrado."
+                          options={clientesDisponiveis.map((c) => ({
+                            value: c.id,
+                            label: `${c.nome} - (${c.padariaNome})`,
+                          }))}
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -223,9 +273,11 @@ export function SalesFormDialog({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {/* Popula o select com os dados do Firestore */}
                               {farinhasDisponiveis.map((farinha) => (
-                                <SelectItem key={farinha.id} value={farinha.nome}>
+                                <SelectItem
+                                  key={farinha.id}
+                                  value={farinha.nome}
+                                >
                                   {farinha.nome}
                                 </SelectItem>
                               ))}
@@ -236,20 +288,20 @@ export function SalesFormDialog({
                       )}
                     />
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* ... outros FormFields dos itens (quantidade, preco, etc.) sem alterações ... */}
-                       <FormField
+                      <FormField
                         control={form.control}
                         name={`itens.${index}.quantidade`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Quantidade</FormLabel>
                             <FormControl>
-                              <Input 
-                                value={field.value !== undefined ? String(field.value) : ''}
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref} />
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={(event) =>
+                                  field.onChange(+event.target.value)
+                                }
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -265,11 +317,10 @@ export function SalesFormDialog({
                               <Input
                                 type="number"
                                 step="0.01"
-                                value={field.value !== undefined ? String(field.value) : ''}
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
+                                {...field}
+                                onChange={(event) =>
+                                  field.onChange(+event.target.value)
+                                }
                               />
                             </FormControl>
                             <FormMessage />
@@ -285,11 +336,10 @@ export function SalesFormDialog({
                             <FormControl>
                               <Input
                                 type="number"
-                                value={field.value !== undefined ? String(field.value) : ''}
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
+                                {...field}
+                                onChange={(event) =>
+                                  field.onChange(+event.target.value)
+                                }
                               />
                             </FormControl>
                             <FormMessage />
