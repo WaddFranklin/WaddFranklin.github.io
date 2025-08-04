@@ -44,7 +44,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, PlusCircle } from 'lucide-react';
-// Importe o novo componente Combobox
 import { Combobox } from '@/components/ui/combobox';
 
 const formatCurrency = (value: number) => {
@@ -78,7 +77,7 @@ export function SalesFormDialog({
   >([]);
 
   const form = useForm<VendaFormValues>({
-    resolver: zodResolver(vendaSchema),
+    resolver: zodResolver(vendaSchema), // Este resolver agora funcionará corretamente
     defaultValues: {
       clienteId: '',
       data: new Date(),
@@ -202,7 +201,6 @@ export function SalesFormDialog({
               className="space-y-6"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* SUBSTITUINDO O SELECT PELO COMBOBOX */}
                 <FormField
                   control={form.control}
                   name="clienteId"
@@ -295,13 +293,7 @@ export function SalesFormDialog({
                           <FormItem>
                             <FormLabel>Quantidade</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                onChange={(event) =>
-                                  field.onChange(+event.target.value)
-                                }
-                              />
+                              <Input type="number" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -314,14 +306,7 @@ export function SalesFormDialog({
                           <FormItem>
                             <FormLabel>Preço Unit. (R$)</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                {...field}
-                                onChange={(event) =>
-                                  field.onChange(+event.target.value)
-                                }
-                              />
+                              <Input type="number" step="0.01" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -334,13 +319,7 @@ export function SalesFormDialog({
                           <FormItem>
                             <FormLabel>Comissão (%)</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                onChange={(event) =>
-                                  field.onChange(+event.target.value)
-                                }
-                              />
+                              <Input type="number" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
