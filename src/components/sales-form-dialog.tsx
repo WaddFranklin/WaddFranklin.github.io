@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Venda,
@@ -77,7 +77,7 @@ export function SalesFormDialog({
   >([]);
 
   const form = useForm<VendaFormValues>({
-    resolver: zodResolver(vendaSchema), // Este resolver agora funcionará corretamente
+    resolver: zodResolver(vendaSchema) as Resolver<VendaFormValues>, // Este resolver agora funcionará corretamente
     defaultValues: {
       clienteId: '',
       data: new Date(),
