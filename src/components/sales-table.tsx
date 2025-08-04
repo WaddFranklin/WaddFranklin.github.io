@@ -1,9 +1,9 @@
 // src/components/sales-table.tsx
-"use client";
-import React from "react";
-import { useState } from "react";
-import { Venda } from "@/lib/types";
-import { Timestamp } from "firebase/firestore";
+'use client';
+import React from 'react';
+import { useState } from 'react';
+import { Venda } from '@/lib/types';
+import { Timestamp } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -12,10 +12,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "./ui/button";
-import { ChevronDown } from "lucide-react";
-import { SalesActions } from "./sales-actions";
+} from '@/components/ui/table';
+import { Button } from './ui/button';
+import { ChevronDown } from 'lucide-react';
+import { SalesActions } from './sales-actions';
 
 interface SalesTableProps {
   data: Venda[];
@@ -25,23 +25,23 @@ interface SalesTableProps {
 
 const formatDate = (date: Date | Timestamp | string) => {
   if (date instanceof Timestamp) {
-    return date.toDate().toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
+    return date.toDate().toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
     });
   }
-  return new Date(date).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
+  return new Date(date).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
 };
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
   }).format(value);
 };
 
@@ -50,11 +50,11 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
 
   const totalGeralVendas = data.reduce(
     (acc, venda) => acc + (venda.totalVenda || 0),
-    0
+    0,
   );
   const totalGeralComissao = data.reduce(
     (acc, venda) => acc + (venda.totalComissao || 0),
-    0
+    0,
   );
 
   return (
@@ -84,10 +84,11 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
                       size="sm"
                       onClick={() =>
                         setOpenRowId(openRowId === venda.id ? null : venda.id)
-                      }>
+                      }
+                    >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
-                          openRowId === venda.id ? "rotate-180" : ""
+                          openRowId === venda.id ? 'rotate-180' : ''
                         }`}
                       />
                       <span className="sr-only">Detalhes</span>
@@ -96,9 +97,12 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
                   <TableCell>{formatDate(venda.data)}</TableCell>
                   {/* 2. EXIBIMOS OS DADOS EM CÉLULAS SEPARADAS */}
                   <TableCell className="font-medium">
-                    {venda.clienteNome || (venda as any).cliente}
+                    {/* Agora não precisamos mais do 'any' */}
+                    {venda.clienteNome
+                      ? `${venda.clienteNome} (${venda.padariaNome})`
+                      : venda.cliente}
                   </TableCell>
-                  <TableCell>{venda.padariaNome || "N/A"}</TableCell>
+                  <TableCell>{venda.padariaNome || 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     {venda.itens.length}
                   </TableCell>
@@ -155,7 +159,7 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
                                 </TableCell>
                                 <TableCell className="text-right font-medium">
                                   {formatCurrency(
-                                    item.quantidade * item.precoUnitario
+                                    item.quantidade * item.precoUnitario,
                                   )}
                                 </TableCell>
                               </TableRow>
