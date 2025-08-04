@@ -1,9 +1,9 @@
 // src/components/bakery-actions.tsx
-'use client';
+"use client";
 
-import { Padaria } from '@/lib/types';
-import { toast } from 'sonner';
-import { db } from '@/lib/firebase/client';
+import { Padaria } from "@/lib/types";
+import { toast } from "sonner";
+import { db } from "@/lib/firebase/client";
 import {
   doc,
   collection,
@@ -11,17 +11,18 @@ import {
   where,
   getDocs,
   writeBatch,
-} from 'firebase/firestore';
+} from "firebase/firestore";
+import { useAuth } from "./auth-provider"; // 1. Importar o useAuth
 
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
 interface BakeryActionsProps {
   padaria: Padaria;
@@ -45,37 +46,41 @@ export function BakeryActions({
   onEdit,
   onDataChange,
 }: BakeryActionsProps) {
+  const { user } = useAuth(); // 2. Obter o usuário logado
+
   const handleDelete = async () => {
+    if (!user) {
+      toast.error("Você precisa estar logado para realizar esta ação.");
+      return;
+    }
+
     try {
-      // 1. Encontrar todos os clientes associados a esta padaria
+      // 3. CORREÇÃO: A consulta agora filtra por padariaId E por userId
       const clientesQuery = query(
-        collection(db, 'clientes'),
-        where('padariaId', '==', padaria.id),
+        collection(db, "clientes"),
+        where("padariaId", "==", padaria.id),
+        where("userId", "==", user.uid) // <-- Linha adicionada
       );
       const clientesSnapshot = await getDocs(clientesQuery);
 
-      // 2. Usar um batch para deletar a padaria e todos os seus clientes
       const batch = writeBatch(db);
 
-      // Adicionar os clientes ao batch para exclusão
       clientesSnapshot.forEach((clienteDoc) => {
         batch.delete(clienteDoc.ref);
       });
 
-      // Adicionar a própria padaria ao batch para exclusão
-      const padariaRef = doc(db, 'padarias', padaria.id);
+      const padariaRef = doc(db, "padarias", padaria.id);
       batch.delete(padariaRef);
 
-      // 3. Executar o batch
       await batch.commit();
 
       toast.success(
-        'Padaria e clientes associados foram excluídos com sucesso!',
+        "Padaria e clientes associados foram excluídos com sucesso!"
       );
       onDataChange();
     } catch (error) {
-      toast.error('Erro ao excluir a padaria.');
-      console.error(error);
+      toast.error("Erro ao excluir a padaria.");
+      console.error("Erro ao excluir:", error); // Log para mais detalhes
     }
   };
 
@@ -116,8 +121,7 @@ export function BakeryActions({
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700"
-          >
+            className="bg-red-600 hover:bg-red-700">
             Sim, excluir tudo
           </AlertDialogAction>
         </AlertDialogFooter>

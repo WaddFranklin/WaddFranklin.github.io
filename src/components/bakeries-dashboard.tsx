@@ -1,11 +1,11 @@
 // src/components/bakeries-dashboard.tsx
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from './auth-provider';
-import { Padaria, PadariaFormValues, Cliente } from '@/lib/types';
-import { toast } from 'sonner';
-import { db } from '@/lib/firebase/client';
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "./auth-provider";
+import { Padaria, PadariaFormValues } from "@/lib/types";
+import { toast } from "sonner";
+import { db } from "@/lib/firebase/client";
 import {
   collection,
   query,
@@ -16,19 +16,19 @@ import {
   doc,
   writeBatch,
   orderBy,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
-import { BakeriesTable } from './bakery-table';
-import { BakeryFormDialog } from './bakery-form-dialog';
-import { Button } from './ui/button';
-import { Plus, Building2 } from 'lucide-react';
+import { BakeriesTable } from "./bakery-table";
+import { BakeryFormDialog } from "./bakery-form-dialog";
+import { Button } from "./ui/button";
+import { Plus, Building2 } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 
 export function BakeriesDashboard() {
   const { user } = useAuth();
@@ -41,19 +41,20 @@ export function BakeriesDashboard() {
     if (!user) return;
     setLoading(true);
     try {
-      const padariasCol = collection(db, 'padarias');
+      const padariasCol = collection(db, "padarias");
       const q = query(
         padariasCol,
-        where('userId', '==', user.uid),
-        orderBy('nome', 'asc'),
+        where("userId", "==", user.uid),
+        orderBy("nome", "asc")
       );
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Padaria),
+        (doc) => ({ id: doc.id, ...doc.data() } as Padaria)
       );
       setPadarias(data);
     } catch (error) {
-      toast.error('Erro ao carregar padarias.');
+      console.error(error);
+      toast.error("Erro ao carregar padarias.");
     } finally {
       setLoading(false);
     }
@@ -79,9 +80,10 @@ export function BakeriesDashboard() {
     try {
       const padariaData = {
         nome: values.nome,
-        endereco: values.endereco,
-        bairro: values.bairro,
-        cep: values.cep, // Adicionado aqui
+        // Garante que campos opcionais sejam salvos como string vazia se não preenchidos
+        endereco: values.endereco || "",
+        bairro: values.bairro || "",
+        cep: values.cep || "",
         cnpj: values.cnpj,
         telefone: values.telefone,
         userId: user.uid,
@@ -91,10 +93,10 @@ export function BakeriesDashboard() {
 
       if (padariaToEdit) {
         padariaId = padariaToEdit.id;
-        const padariaRef = doc(db, 'padarias', padariaId);
+        const padariaRef = doc(db, "padarias", padariaId);
         await updateDoc(padariaRef, padariaData);
       } else {
-        const padariasCol = collection(db, 'padarias');
+        const padariasCol = collection(db, "padarias");
         const docRef = await addDoc(padariasCol, padariaData);
         padariaId = docRef.id;
       }
@@ -103,13 +105,13 @@ export function BakeriesDashboard() {
       values.clientes.forEach((cliente) => {
         const clienteData = {
           nome: cliente.nome,
-          telefone: cliente.telefone || '', // Garante que um valor vazio seja salvo se não for preenchido
+          telefone: cliente.telefone || "",
           padariaId: padariaId,
           userId: user.uid,
         };
         const clienteRef = cliente.id
-          ? doc(db, 'clientes', cliente.id)
-          : doc(collection(db, 'clientes'));
+          ? doc(db, "clientes", cliente.id)
+          : doc(collection(db, "clientes"));
 
         batch.set(clienteRef, clienteData, { merge: true });
       });
@@ -117,11 +119,12 @@ export function BakeriesDashboard() {
       await batch.commit();
 
       toast.success(
-        `Padaria ${padariaToEdit ? 'atualizada' : 'cadastrada'} com sucesso!`,
+        `Padaria ${padariaToEdit ? "atualizada" : "cadastrada"} com sucesso!`
       );
       fetchPadarias();
     } catch (error) {
-      toast.error('Erro ao salvar padaria.');
+      console.error(error);
+      toast.error("Erro ao salvar padaria.");
     } finally {
       setIsFormOpen(false);
     }
