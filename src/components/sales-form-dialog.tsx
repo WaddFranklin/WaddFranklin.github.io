@@ -237,7 +237,9 @@ export function SalesFormDialog({
                               ? field.value.toISOString().split('T')[0]
                               : ''
                           }
-                          onChange={(e) => field.onChange(e.target.valueAsDate)}
+                          onChange={(e) =>
+                            field.onChange(e.target.valueAsDate ?? new Date())
+                          }
                         />
                       </FormControl>
                       <FormMessage />
