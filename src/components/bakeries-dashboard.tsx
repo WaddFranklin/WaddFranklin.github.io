@@ -1,11 +1,11 @@
 // src/components/bakeries-dashboard.tsx
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "./auth-provider";
-import { Padaria, PadariaFormValues } from "@/lib/types";
-import { toast } from "sonner";
-import { db } from "@/lib/firebase/client";
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from './auth-provider';
+import { Padaria, PadariaFormValues } from '@/lib/types';
+import { toast } from 'sonner';
+import { db } from '@/lib/firebase/client';
 import {
   collection,
   query,
@@ -16,19 +16,19 @@ import {
   doc,
   writeBatch,
   orderBy,
-} from "firebase/firestore";
+} from 'firebase/firestore';
 
-import { BakeriesTable } from "./bakery-table";
-import { BakeryFormDialog } from "./bakery-form-dialog";
-import { Button } from "./ui/button";
-import { Plus, Building2 } from "lucide-react";
+import { BakeriesTable } from './bakery-table';
+import { BakeryFormDialog } from './bakery-form-dialog';
+import { Button } from './ui/button';
+import { Plus, Building2 } from 'lucide-react';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 
 export function BakeriesDashboard() {
   const { user } = useAuth();
@@ -41,20 +41,20 @@ export function BakeriesDashboard() {
     if (!user) return;
     setLoading(true);
     try {
-      const padariasCol = collection(db, "padarias");
+      const padariasCol = collection(db, 'padarias');
       const q = query(
         padariasCol,
-        where("userId", "==", user.uid),
-        orderBy("nome", "asc")
+        where('userId', '==', user.uid),
+        orderBy('nome', 'asc'),
       );
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Padaria)
+        (doc) => ({ id: doc.id, ...doc.data() } as Padaria),
       );
       setPadarias(data);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao carregar padarias.");
+      toast.error('Erro ao carregar padarias.');
     } finally {
       setLoading(false);
     }
@@ -80,12 +80,12 @@ export function BakeriesDashboard() {
     try {
       const padariaData = {
         nome: values.nome,
-        // Garante que campos opcionais sejam salvos como string vazia se não preenchidos
-        endereco: values.endereco || "",
-        bairro: values.bairro || "",
-        cep: values.cep || "",
-        cnpj: values.cnpj,
-        telefone: values.telefone,
+        endereco: values.endereco || '',
+        bairro: values.bairro || '',
+        cep: values.cep || '',
+        cpf: values.cpf || '', // Adicionado
+        cnpj: values.cnpj || '', // Agora opcional
+        telefone: values.telefone || '', // Agora opcional
         userId: user.uid,
       };
 
@@ -93,10 +93,10 @@ export function BakeriesDashboard() {
 
       if (padariaToEdit) {
         padariaId = padariaToEdit.id;
-        const padariaRef = doc(db, "padarias", padariaId);
+        const padariaRef = doc(db, 'padarias', padariaId);
         await updateDoc(padariaRef, padariaData);
       } else {
-        const padariasCol = collection(db, "padarias");
+        const padariasCol = collection(db, 'padarias');
         const docRef = await addDoc(padariasCol, padariaData);
         padariaId = docRef.id;
       }
@@ -105,13 +105,13 @@ export function BakeriesDashboard() {
       values.clientes.forEach((cliente) => {
         const clienteData = {
           nome: cliente.nome,
-          telefone: cliente.telefone || "",
+          telefone: cliente.telefone || '',
           padariaId: padariaId,
           userId: user.uid,
         };
         const clienteRef = cliente.id
-          ? doc(db, "clientes", cliente.id)
-          : doc(collection(db, "clientes"));
+          ? doc(db, 'clientes', cliente.id)
+          : doc(collection(db, 'clientes'));
 
         batch.set(clienteRef, clienteData, { merge: true });
       });
@@ -119,12 +119,12 @@ export function BakeriesDashboard() {
       await batch.commit();
 
       toast.success(
-        `Padaria ${padariaToEdit ? "atualizada" : "cadastrada"} com sucesso!`
+        `Cadastro ${padariaToEdit ? 'atualizado' : 'realizado'} com sucesso!`,
       );
       fetchPadarias();
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar padaria.");
+      toast.error('Erro ao salvar os dados.');
     } finally {
       setIsFormOpen(false);
     }
@@ -143,7 +143,7 @@ export function BakeriesDashboard() {
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
-              Gestão de Padarias
+              Gestão de Padarias e Clientes
             </CardTitle>
             <CardDescription>
               Cadastre e gerencie suas padarias e clientes.
@@ -151,7 +151,7 @@ export function BakeriesDashboard() {
           </div>
           <Button onClick={handleOpenAddDialog}>
             <Plus className="mr-2 h-4 w-4" />
-            Cadastrar Padaria
+            Novo Cadastro
           </Button>
         </CardHeader>
         <CardContent>

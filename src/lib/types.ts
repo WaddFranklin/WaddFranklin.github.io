@@ -20,21 +20,28 @@ export const clienteSchema = z.object({
   telefone: z.string().optional(),
 });
 
-export const padariaSchema = z.object({
-  nome: z.string().min(3, { message: 'O nome da padaria é obrigatório.' }),
-  // Campos agora opcionais
-  endereco: z.string().optional(),
-  bairro: z.string().optional(),
-  cep: z.string().optional(),
-  // Campos que permanecem obrigatórios
-  cnpj: z
-    .string()
-    .length(18, { message: 'CNPJ inválido (deve ter 18 caracteres).' }),
-  telefone: z.string().min(10, { message: 'O telefone é obrigatório.' }),
-  clientes: z.array(clienteSchema).min(1, {
-    message: 'A padaria deve ter pelo menos um cliente/proprietário.',
-  }),
-});
+export const padariaSchema = z
+  .object({
+    nome: z.string().min(3, { message: 'O nome da padaria é obrigatório.' }),
+    endereco: z.string().optional(),
+    bairro: z.string().optional(),
+    cep: z.string().optional(),
+    // --- INÍCIO DA ALTERAÇÃO ---
+    // 1. Adicionamos o campo CPF como opcional
+    cpf: z.string().optional(),
+    // 2. Tornamos o CNPJ opcional
+    cnpj: z.string().optional(),
+    // 3. Tornamos o Telefone opcional
+    telefone: z.string().optional(),
+    // --- FIM DA ALTERAÇÃO ---
+    clientes: z.array(clienteSchema),
+  })
+  // 4. Adicionamos a regra de validação customizada
+  .refine((data) => !!data.cpf || !!data.cnpj, {
+    message: 'É obrigatório preencher o CPF ou o CNPJ.',
+    // Isso fará a mensagem de erro aparecer em ambos os campos
+    path: ['cpf', 'cnpj'],
+  });
 
 export type Cliente = z.infer<typeof clienteSchema> & {
   id: string;
@@ -46,37 +53,28 @@ export type Padaria = {
   id: string;
   userId: string;
   nome: string;
-  endereco?: string; // Marcado como opcional
-  bairro?: string; // Marcado como opcional
-  cep?: string; // Marcado como opcional
-  cnpj: string;
-  telefone: string;
+  endereco?: string;
+  bairro?: string;
+  cep?: string;
+  cpf?: string; // Adicionado ao tipo
+  cnpj?: string; // Marcado como opcional
+  telefone?: string; // Marcado como opcional
 };
 
 // --- SCHEMA DE VENDA ---
 export const itemSchema = z.object({
   farinha: z.string().min(1, { message: 'Selecione uma farinha.' }),
-  // Trocamos z.coerce por z.preprocess para evitar o conflito de tipos
-  quantidade: z.preprocess(
-    (val) => Number(String(val).trim()),
-    z
-      .number({ message: 'Deve ser um número.' })
-      .min(1, { message: 'A qtd. deve ser no mínimo 1.' }),
-  ),
-  precoUnitario: z.preprocess(
-    (val) => Number(String(val).trim()),
-    z
-      .number({ message: 'Deve ser um número.' })
-      .min(0.01, { message: 'O preço deve ser positivo.' }),
-  ),
-  comissaoPercentual: z.preprocess(
-    (val) => Number(String(val).trim()),
-    z
-      .number({ message: 'Deve ser um número.' })
-      .min(0, { message: 'Comissão não pode ser negativa.' })
-      .max(100, { message: 'Comissão não pode ser maior que 100.' })
-      .default(0),
-  ),
+  quantidade: z.coerce
+    .number({ message: 'Deve ser um número.' })
+    .min(1, { message: 'A qtd. deve ser no mínimo 1.' }),
+  precoUnitario: z.coerce
+    .number({ message: 'Deve ser um número.' })
+    .min(0.01, { message: 'O preço deve ser positivo.' }),
+  comissaoPercentual: z.coerce
+    .number({ message: 'Deve ser um número.' })
+    .min(0, { message: 'Comissão não pode ser negativa.' })
+    .max(100, { message: 'Comissão não pode ser maior que 100.' })
+    .default(0),
 });
 
 export const vendaSchema = z.object({
@@ -107,7 +105,7 @@ export type Venda = {
   totalVenda: number;
   totalComissao: number;
   userId: string;
-  cliente?: string; // Adicionamos o campo antigo 'cliente' como opcional
+  cliente?: string;
 };
 
 // --- SCHEMA DE CADASTRO (Existente) ---

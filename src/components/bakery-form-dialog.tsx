@@ -1,14 +1,14 @@
 // src/components/bakery-form-dialog.tsx
 'use client';
 
-import { useEffect, useState } from 'react'; // 1. Importar useState
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Padaria, padariaSchema, PadariaFormValues } from '@/lib/types';
 import { useAuth } from './auth-provider';
 import { db } from '@/lib/firebase/client';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import axios from 'axios'; // 2. Importar axios
+import axios from 'axios';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from './ui/separator';
-import { Trash2, PlusCircle, LoaderCircle } from 'lucide-react'; // 3. Importar um ícone de loading
+import { Trash2, PlusCircle, LoaderCircle } from 'lucide-react';
 
 interface BakeryFormDialogProps {
   padariaToEdit?: Padaria | null;
@@ -47,7 +47,6 @@ export function BakeryFormDialog({
   onSubmit,
 }: BakeryFormDialogProps) {
   const { user } = useAuth();
-  // 4. Estado para controlar o loading da busca de CEP
   const [isCepLoading, setIsCepLoading] = useState(false);
 
   const form = useForm<PadariaFormValues>({
@@ -57,9 +56,10 @@ export function BakeryFormDialog({
       endereco: '',
       bairro: '',
       cep: '',
+      cpf: '',
       cnpj: '',
       telefone: '',
-      clientes: [{ nome: '', telefone: '' }],
+      clientes: [],
     },
   });
 
@@ -68,12 +68,11 @@ export function BakeryFormDialog({
     name: 'clientes',
   });
 
-  // 5. Função para buscar o CEP
   const handleCepBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
-    const cep = event.target.value.replace(/\D/g, ''); // Remove caracteres não numéricos
+    const cep = event.target.value.replace(/\D/g, '');
 
     if (cep.length !== 8) {
-      return; // Só busca se tiver 8 dígitos
+      return;
     }
 
     setIsCepLoading(true);
@@ -87,7 +86,6 @@ export function BakeryFormDialog({
         return;
       }
 
-      // Preenche os campos do formulário com os dados da API
       form.setValue('endereco', data.logradouro, { shouldValidate: true });
       form.setValue('bairro', data.bairro, { shouldValidate: true });
     } catch (error) {
@@ -116,8 +114,7 @@ export function BakeryFormDialog({
         fetchClientes(padariaToEdit.id).then((clientes) => {
           form.reset({
             ...padariaToEdit,
-            clientes:
-              clientes.length > 0 ? clientes : [{ nome: '', telefone: '' }],
+            clientes: clientes.length > 0 ? clientes : [],
           });
         });
       } else {
@@ -126,9 +123,10 @@ export function BakeryFormDialog({
           endereco: '',
           bairro: '',
           cep: '',
+          cpf: '',
           cnpj: '',
           telefone: '',
-          clientes: [{ nome: '', telefone: '' }],
+          clientes: [],
         });
       }
     }
@@ -160,7 +158,7 @@ export function BakeryFormDialog({
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome da Padaria</FormLabel>
+                    <FormLabel>Nome da Padaria/Cliente</FormLabel>
                     <FormControl>
                       <Input placeholder="Ex: Padaria do Bairro" {...field} />
                     </FormControl>
@@ -170,11 +168,29 @@ export function BakeryFormDialog({
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
+                  name="cpf"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CPF</FormLabel>
+                      <FormControl>
+                        <Input placeholder="000.000.000-00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
                   name="cnpj"
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CNPJ</FormLabel>
+                      <FormLabel>
+                        CNPJ{' '}
+                        <span className="text-muted-foreground">
+                          (Opcional)
+                        </span>
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="00.000.000/0000-00" {...field} />
                       </FormControl>
@@ -182,20 +198,23 @@ export function BakeryFormDialog({
                     </FormItem>
                   )}
                 />
-                <FormField
-                  name="telefone"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="(82) 99999-9999" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
+              <FormField
+                name="telefone"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Telefone{' '}
+                      <span className="text-muted-foreground">(Opcional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="(82) 99999-9999" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <FormField
                   name="cep"
@@ -210,7 +229,6 @@ export function BakeryFormDialog({
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          {/* 6. Adicionamos o evento onBlur */}
                           <Input
                             placeholder="00000-000"
                             {...field}
@@ -265,7 +283,7 @@ export function BakeryFormDialog({
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">
-                  Clientes / Proprietários
+                  Contatos Adicionais (Opcional)
                 </h3>
                 {fields.map((field, index) => (
                   <div
@@ -278,7 +296,7 @@ export function BakeryFormDialog({
                         control={form.control}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nome do Cliente</FormLabel>
+                            <FormLabel>Nome do Contato</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -292,7 +310,7 @@ export function BakeryFormDialog({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
-                              Telefone do Cliente{' '}
+                              Telefone do Contato{' '}
                               <span className="text-muted-foreground">
                                 (Opcional)
                               </span>
@@ -305,17 +323,15 @@ export function BakeryFormDialog({
                         )}
                       />
                     </div>
-                    {fields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 h-7 w-7"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-7 w-7"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -326,7 +342,7 @@ export function BakeryFormDialog({
                 onClick={() => append({ nome: '', telefone: '' })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Adicionar outro cliente
+                Adicionar outro contato
               </Button>
             </form>
           </Form>

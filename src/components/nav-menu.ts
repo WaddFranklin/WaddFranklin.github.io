@@ -12,7 +12,7 @@ export const menuItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/flours', label: 'Farinhas', icon: Wheat },
   { href: '/bakeries', label: 'Padarias', icon: Building2 },
-  { href: '/clients', label: 'Clientes', icon: Users }, // 2. Adicionar nova linha para Clientes
+  { href: '/clients', label: 'Clientes', icon: Users },
   { href: '#', label: 'Histórico', icon: History },
   { href: '#', label: 'Meu Perfil', icon: User },
 ];
