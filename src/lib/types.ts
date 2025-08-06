@@ -23,12 +23,10 @@ export const clienteSchema = z.object({
 export const padariaSchema = z
   .object({
     nome: z.string().min(3, { message: 'O nome da padaria é obrigatório.' }),
-    // --- INÍCIO DA ALTERAÇÃO ---
     endereco: z.string().min(3, { message: 'O endereço é obrigatório.' }),
-    numero: z.string().optional(), // Tornamos o número opcional
+    numero: z.string().optional(),
     bairro: z.string().min(3, { message: 'O bairro é obrigatório.' }),
     cep: z.string().min(8, { message: 'O CEP é obrigatório.' }),
-    // --- FIM DA ALTERAÇÃO ---
     cpf: z.string().optional(),
     cnpj: z.string().optional(),
     telefone: z.string().optional(),
@@ -50,7 +48,7 @@ export type Padaria = {
   userId: string;
   nome: string;
   endereco: string;
-  numero?: string; // Marcado como opcional
+  numero?: string;
   bairro: string;
   cep: string;
   cpf?: string;
@@ -58,20 +56,35 @@ export type Padaria = {
   telefone?: string;
 };
 
-// --- SCHEMA DE VENDA ---
+// --- SCHEMA DE VENDA E ITEM (COM A CORREÇÃO) ---
 export const itemSchema = z.object({
   farinha: z.string().min(1, { message: 'Selecione uma farinha.' }),
-  quantidade: z.coerce
-    .number({ message: 'Deve ser um número.' })
-    .min(1, { message: 'A qtd. deve ser no mínimo 1.' }),
-  precoUnitario: z.coerce
-    .number({ message: 'Deve ser um número.' })
-    .min(0.01, { message: 'O preço deve ser positivo.' }),
-  comissaoPercentual: z.coerce
-    .number({ message: 'Deve ser um número.' })
-    .min(0, { message: 'Comissão não pode ser negativa.' })
-    .max(100, { message: 'Comissão não pode ser maior que 100.' })
-    .default(0),
+
+  // --- INÍCIO DA CORREÇÃO ---
+  // Trocamos z.coerce por z.preprocess para evitar o conflito de tipos
+  quantidade: z.preprocess(
+    (val) => Number(String(val).trim()),
+    z
+      .number({ message: 'Deve ser um número.' })
+      .min(1, { message: 'A qtd. deve ser no mínimo 1.' }),
+  ),
+
+  precoUnitario: z.preprocess(
+    (val) => Number(String(val).trim()),
+    z
+      .number({ message: 'Deve ser um número.' })
+      .min(0.01, { message: 'O preço deve ser positivo.' }),
+  ),
+
+  comissaoPercentual: z.preprocess(
+    (val) => Number(String(val).trim() || 0), // Adiciona '|| 0' para tratar campo vazio
+    z
+      .number({ message: 'Deve ser um número.' })
+      .min(0, { message: 'Comissão não pode ser negativa.' })
+      .max(100, { message: 'Comissão não pode ser maior que 100.' })
+      .default(0),
+  ),
+  // --- FIM DA CORREÇÃO ---
 });
 
 export const vendaSchema = z.object({
@@ -92,6 +105,7 @@ export const vendaSchema = z.object({
 
 export type ItemVenda = z.infer<typeof itemSchema>;
 export type VendaFormValues = z.infer<typeof vendaSchema>;
+
 export type Venda = {
   id: string;
   padariaId: string;

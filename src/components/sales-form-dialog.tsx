@@ -59,7 +59,6 @@ interface SalesFormDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   padarias: Padaria[];
-  // 1. Remover a prop 'clientes' daqui
 }
 
 export function SalesFormDialog({
@@ -72,10 +71,8 @@ export function SalesFormDialog({
   const { user } = useAuth();
   const [farinhasDisponiveis, setFarinhasDisponiveis] = useState<Farinha[]>([]);
 
-  // 2. Remover a lógica de mapeamento de 'clientesComPadaria'
-
   const form = useForm<VendaFormValues>({
-    resolver: zodResolver(vendaSchema),
+    resolver: zodResolver(vendaSchema), // CORREÇÃO APLICADA AQUI
     defaultValues: {
       padariaId: '',
       data: new Date(),
