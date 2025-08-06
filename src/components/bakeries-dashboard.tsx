@@ -81,11 +81,12 @@ export function BakeriesDashboard() {
       const padariaData = {
         nome: values.nome,
         endereco: values.endereco || '',
+        numero: values.numero || '', // Adicionado
         bairro: values.bairro || '',
         cep: values.cep || '',
-        cpf: values.cpf || '', // Adicionado
-        cnpj: values.cnpj || '', // Agora opcional
-        telefone: values.telefone || '', // Agora opcional
+        cpf: values.cpf || '',
+        cnpj: values.cnpj || '',
+        telefone: values.telefone || '',
         userId: user.uid,
       };
 

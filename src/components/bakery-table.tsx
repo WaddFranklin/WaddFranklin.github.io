@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import React from 'react';
 import { Padaria, Cliente } from '@/lib/types';
 import { useAuth } from './auth-provider';
 import { db } from '@/lib/firebase/client';
@@ -18,7 +19,6 @@ import { Button } from './ui/button';
 import { ChevronDown, Users, Phone } from 'lucide-react';
 import { BakeryActions } from './bakery-actions';
 import { toast } from 'sonner';
-import React from 'react';
 
 interface BakeriesTableProps {
   data: Padaria[];
@@ -74,6 +74,13 @@ function BakeryRow({
     }
   };
 
+  // --- INÍCIO DA CORREÇÃO ---
+  // Lógica para montar o endereço completo de forma segura
+  const enderecoCompleto = [padaria.endereco, padaria.numero]
+    .filter(Boolean)
+    .join(', ');
+  // --- FIM DA CORREÇÃO ---
+
   return (
     <React.Fragment>
       <TableRow>
@@ -92,11 +99,14 @@ function BakeryRow({
           </Button>
         </TableCell>
         <TableCell className="font-medium">{padaria.nome}</TableCell>
-        {/* --- INÍCIO DA ALTERAÇÃO --- */}
         <TableCell>{padaria.cpf || padaria.cnpj || 'N/A'}</TableCell>
-        {/* --- FIM DA ALTERAÇÃO --- */}
         <TableCell>{padaria.telefone || 'N/A'}</TableCell>
+        <TableCell>
+          {/* Usamos a nova variável que já tratou o caso de número ausente */}
+          {enderecoCompleto || 'N/A'}
+        </TableCell>
         <TableCell>{padaria.bairro || 'N/A'}</TableCell>
+        <TableCell>{padaria.cep || 'N/A'}</TableCell>
         <TableCell className="text-right">
           <div>
             <BakeryActions
@@ -109,9 +119,7 @@ function BakeryRow({
       </TableRow>
       {isOpen && (
         <TableRow className="bg-muted/50 hover:bg-muted/50">
-          <TableCell colSpan={7} className="p-4">
-            {' '}
-            {/* Colspan atualizado */}
+          <TableCell colSpan={8} className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Users className="h-5 w-5" />
               <h4 className="font-semibold">Contatos Associados</h4>
@@ -160,11 +168,11 @@ export function BakeriesTable({
           <TableRow>
             <TableHead className="w-[60px]"></TableHead>
             <TableHead>Nome</TableHead>
-            {/* --- INÍCIO DA ALTERAÇÃO --- */}
             <TableHead>Documento (CPF/CNPJ)</TableHead>
-            {/* --- FIM DA ALTERAÇÃO --- */}
             <TableHead>Telefone</TableHead>
+            <TableHead>Endereço</TableHead>
             <TableHead>Bairro</TableHead>
+            <TableHead>CEP</TableHead>
             <TableHead className="text-right w-[100px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -180,9 +188,7 @@ export function BakeriesTable({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="h-24 text-center">
-                {' '}
-                {/* Colspan atualizado */}
+              <TableCell colSpan={8} className="h-24 text-center">
                 Nenhum cadastro encontrado.
               </TableCell>
             </TableRow>

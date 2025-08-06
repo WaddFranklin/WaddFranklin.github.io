@@ -2,14 +2,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray, useWatch, Resolver } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Venda,
   VendaFormValues,
   vendaSchema,
   Farinha,
-  Cliente,
+  Padaria,
 } from '@/lib/types';
 import { useAuth } from './auth-provider';
 import { db } from '@/lib/firebase/client';
@@ -53,15 +53,13 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-interface ClienteComPadaria extends Cliente {
-  padariaNome: string;
-}
-
 interface SalesFormDialogProps {
   vendaToEdit?: Venda | null;
   onSubmit: (values: VendaFormValues) => Promise<void>;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  padarias: Padaria[];
+  // 1. Remover a prop 'clientes' daqui
 }
 
 export function SalesFormDialog({
@@ -69,17 +67,17 @@ export function SalesFormDialog({
   setIsOpen,
   vendaToEdit,
   onSubmit,
+  padarias,
 }: SalesFormDialogProps) {
   const { user } = useAuth();
   const [farinhasDisponiveis, setFarinhasDisponiveis] = useState<Farinha[]>([]);
-  const [clientesDisponiveis, setClientesDisponiveis] = useState<
-    ClienteComPadaria[]
-  >([]);
+
+  // 2. Remover a lógica de mapeamento de 'clientesComPadaria'
 
   const form = useForm<VendaFormValues>({
-    resolver: zodResolver(vendaSchema) as Resolver<VendaFormValues>, // Este resolver agora funcionará corretamente
+    resolver: zodResolver(vendaSchema),
     defaultValues: {
-      clienteId: '',
+      padariaId: '',
       data: new Date(),
       itens: [
         { farinha: '', quantidade: 1, precoUnitario: 0, comissaoPercentual: 0 },
@@ -93,7 +91,7 @@ export function SalesFormDialog({
   });
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFarinhas = async () => {
       if (user && isOpen) {
         try {
           const farinhasCol = collection(db, 'farinhas');
@@ -108,50 +106,26 @@ export function SalesFormDialog({
               (doc) => ({ id: doc.id, ...doc.data() } as Farinha),
             ),
           );
-
-          const padariasCol = collection(db, 'padarias');
-          const qPadarias = query(padariasCol, where('userId', '==', user.uid));
-          const padariasSnapshot = await getDocs(qPadarias);
-          const padariasMap = new Map(
-            padariasSnapshot.docs.map((doc) => [doc.id, doc.data().nome]),
-          );
-
-          const clientesCol = collection(db, 'clientes');
-          const qClientes = query(
-            clientesCol,
-            where('userId', '==', user.uid),
-            orderBy('nome', 'asc'),
-          );
-          const clientesSnapshot = await getDocs(qClientes);
-          const clientesData = clientesSnapshot.docs.map((doc) => {
-            const cliente = { id: doc.id, ...doc.data() } as Cliente;
-            return {
-              ...cliente,
-              padariaNome:
-                padariasMap.get(cliente.padariaId) || 'Padaria não encontrada',
-            };
-          });
-          setClientesDisponiveis(clientesData);
         } catch (error) {
-          console.error('Erro ao buscar dados para o formulário:', error);
-          toast.error('Não foi possível carregar os dados de apoio.');
+          console.error('Erro ao buscar farinhas:', error);
+          toast.error('Não foi possível carregar as farinhas.');
         }
       }
     };
-    fetchData();
+    fetchFarinhas();
   }, [user, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
       if (vendaToEdit) {
         form.reset({
-          clienteId: vendaToEdit.clienteId,
+          padariaId: vendaToEdit.padariaId,
           data: vendaToEdit.data.toDate(),
           itens: vendaToEdit.itens,
         });
       } else {
         form.reset({
-          clienteId: '',
+          padariaId: '',
           data: new Date(),
           itens: [
             {
@@ -189,7 +163,7 @@ export function SalesFormDialog({
           <DialogDescription>
             {isEditMode
               ? 'Altere os dados da comanda abaixo.'
-              : 'Preencha os dados do cliente e adicione os itens da venda.'}
+              : 'Selecione a padaria e adicione os itens da venda.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -203,17 +177,17 @@ export function SalesFormDialog({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="clienteId"
+                  name="padariaId"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Cliente</FormLabel>
+                      <FormLabel>Padaria / Cliente</FormLabel>
                       <FormControl>
                         <Combobox
-                          placeholder="Selecione um cliente"
-                          emptyMessage="Nenhum cliente encontrado."
-                          options={clientesDisponiveis.map((c) => ({
-                            value: c.id,
-                            label: `${c.nome} - (${c.padariaNome})`,
+                          placeholder="Selecione uma padaria"
+                          emptyMessage="Nenhuma padaria encontrada."
+                          options={padarias.map((p) => ({
+                            value: p.id,
+                            label: p.nome,
                           }))}
                           value={field.value}
                           onChange={field.onChange}

@@ -64,9 +64,7 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
           <TableRow>
             <TableHead className="w-[60px]"></TableHead>
             <TableHead>Data</TableHead>
-            {/* 1. SEPARAMOS AS COLUNAS AQUI */}
-            <TableHead>Cliente</TableHead>
-            <TableHead>Padaria</TableHead>
+            <TableHead>Padaria / Cliente</TableHead>
             <TableHead className="text-right">Itens</TableHead>
             <TableHead className="text-right">Comissão Total</TableHead>
             <TableHead className="text-right">Valor Total</TableHead>
@@ -95,14 +93,10 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
                     </Button>
                   </TableCell>
                   <TableCell>{formatDate(venda.data)}</TableCell>
-                  {/* 2. EXIBIMOS OS DADOS EM CÉLULAS SEPARADAS */}
                   <TableCell className="font-medium">
-                    {/* Agora não precisamos mais do 'any' */}
-                    {venda.clienteNome
-                      ? `${venda.clienteNome} (${venda.padariaNome})`
-                      : venda.cliente}
+                    {/* Exibe o nome da padaria, ou o nome antigo do cliente para compatibilidade */}
+                    {venda.padariaNome || venda.cliente || 'N/A'}
                   </TableCell>
-                  <TableCell>{venda.padariaNome || 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     {venda.itens.length}
                   </TableCell>
@@ -124,8 +118,7 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
                 </TableRow>
                 {openRowId === venda.id && (
                   <TableRow className="bg-muted/50">
-                    {/* 3. ATUALIZAMOS O COLSPAN PARA O NOVO TOTAL DE COLUNAS */}
-                    <TableCell colSpan={8} className="p-0">
+                    <TableCell colSpan={7} className="p-0">
                       <div className="p-4">
                         <h4 className="font-semibold mb-2">Itens da Venda:</h4>
                         <Table>
@@ -174,7 +167,7 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={8} className="h-24 text-center">
+              <TableCell colSpan={7} className="h-24 text-center">
                 Nenhuma venda registrada.
               </TableCell>
             </TableRow>
@@ -182,7 +175,7 @@ export function SalesTable({ data, onEdit, onDataChange }: SalesTableProps) {
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={5} className="font-bold text-lg">
+            <TableCell colSpan={4} className="font-bold text-lg">
               TOTAIS GERAIS
             </TableCell>
             <TableCell className="text-right font-bold text-lg">

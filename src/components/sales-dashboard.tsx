@@ -3,13 +3,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './auth-provider';
-import {
-  Venda,
-  VendaFormValues,
-  ItemVenda,
-  Cliente,
-  Padaria,
-} from '@/lib/types'; // Adicionado Cliente e Padaria
+// 1. Remover 'Cliente' dos imports, pois não será mais usado aqui
+import { Venda, VendaFormValues, ItemVenda, Padaria } from '@/lib/types';
 import { toast } from 'sonner';
 
 import { db } from '@/lib/firebase/client';
@@ -28,7 +23,7 @@ import {
 import { SalesTable } from './sales-table';
 import { SalesFormDialog } from './sales-form-dialog';
 import { Button } from './ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 
 export function SalesDashboard() {
   const { user } = useAuth();
@@ -37,73 +32,72 @@ export function SalesDashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [vendaToEdit, setVendaToEdit] = useState<Venda | null>(null);
 
-  // Armazenaremos os clientes e padarias em cache para evitar buscas repetidas
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  // 2. Remover o estado 'clientes'
   const [padarias, setPadarias] = useState<Padaria[]>([]);
 
-  const fetchVendasEComplementos = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
+  const fetchVendasEComplementos = useCallback(
+    async (isRefreshing = false) => {
+      if (!user) return;
+      setLoading(true);
 
-    try {
-      // Busca de Clientes
-      const clientesCol = collection(db, 'clientes');
-      const qClientes = query(clientesCol, where('userId', '==', user.uid));
-      const clientesSnap = await getDocs(qClientes);
-      const clientesData = clientesSnap.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Cliente),
-      );
-      setClientes(clientesData);
+      try {
+        // 3. Remover toda a lógica de busca de Clientes
 
-      // Busca de Padarias
-      const padariasCol = collection(db, 'padarias');
-      const qPadarias = query(padariasCol, where('userId', '==', user.uid));
-      const padariasSnap = await getDocs(qPadarias);
-      const padariasData = padariasSnap.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Padaria),
-      );
-      setPadarias(padariasData);
+        // Busca de Padarias
+        const padariasCol = collection(db, 'padarias');
+        const qPadarias = query(padariasCol, where('userId', '==', user.uid));
+        const padariasSnap = await getDocs(qPadarias);
+        const padariasData = padariasSnap.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as Padaria),
+        );
+        setPadarias(padariasData);
 
-      // Busca de Vendas
-      const vendasCol = collection(db, 'vendas');
-      const qVendas = query(
-        vendasCol,
-        where('userId', '==', user.uid),
-        orderBy('data', 'desc'),
-      );
-
-      const vendasSnapshot = await getDocs(qVendas);
-      const vendasData = vendasSnapshot.docs.map((doc) => {
-        const data = doc.data();
-        const { totalVenda, totalComissao } = data.itens.reduce(
-          (
-            acc: { totalVenda: number; totalComissao: number },
-            item: ItemVenda,
-          ) => {
-            const subtotal = item.quantidade * item.precoUnitario;
-            acc.totalVenda += subtotal;
-            acc.totalComissao += subtotal * (item.comissaoPercentual / 100);
-            return acc;
-          },
-          { totalVenda: 0, totalComissao: 0 },
+        // Busca de Vendas
+        const vendasCol = collection(db, 'vendas');
+        const qVendas = query(
+          vendasCol,
+          where('userId', '==', user.uid),
+          orderBy('data', 'desc'),
         );
 
-        return {
-          id: doc.id,
-          ...data,
-          totalVenda,
-          totalComissao,
-        } as Venda;
-      });
+        const vendasSnapshot = await getDocs(qVendas);
+        const vendasData = vendasSnapshot.docs.map((doc) => {
+          const data = doc.data();
+          const { totalVenda, totalComissao } = data.itens.reduce(
+            (
+              acc: { totalVenda: number; totalComissao: number },
+              item: ItemVenda,
+            ) => {
+              const subtotal = item.quantidade * item.precoUnitario;
+              acc.totalVenda += subtotal;
+              acc.totalComissao += subtotal * (item.comissaoPercentual / 100);
+              return acc;
+            },
+            { totalVenda: 0, totalComissao: 0 },
+          );
 
-      setVendas(vendasData);
-    } catch (error) {
-      console.error('Erro ao buscar dados:', error);
-      toast.error('Não foi possível carregar os dados.');
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+          return {
+            id: doc.id,
+            ...data,
+            totalVenda,
+            totalComissao,
+          } as Venda;
+        });
+
+        setVendas(vendasData);
+
+        if (isRefreshing) {
+          toast.success('Dados atualizados!');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        toast.error('Não foi possível carregar os dados.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user],
+  );
 
   useEffect(() => {
     fetchVendasEComplementos();
@@ -126,35 +120,24 @@ export function SalesDashboard() {
     }
 
     try {
-      // --- INÍCIO DA CORREÇÃO ---
-      // 1. Encontrar o cliente selecionado na nossa lista em cache
-      const clienteSelecionado = clientes.find(
-        (c) => c.id === values.clienteId,
+      // Esta lógica já estava correta, usando apenas a lista de padarias
+      const padariaSelecionada = padarias.find(
+        (p) => p.id === values.padariaId,
       );
-      if (!clienteSelecionado) {
-        toast.error('Cliente selecionado não foi encontrado.');
+      if (!padariaSelecionada) {
+        toast.error(
+          'Padaria selecionada não foi encontrada. Tente atualizar a lista.',
+        );
         return;
       }
 
-      // 2. Encontrar a padaria associada a esse cliente
-      const padariaAssociada = padarias.find(
-        (p) => p.id === clienteSelecionado.padariaId,
-      );
-      if (!padariaAssociada) {
-        toast.error('Padaria do cliente não foi encontrada.');
-        return;
-      }
-
-      // 3. Montar o objeto completo da venda
       const vendaData = {
-        clienteId: values.clienteId,
-        clienteNome: clienteSelecionado.nome, // Adicionado
-        padariaNome: padariaAssociada.nome, // Adicionado
+        padariaId: values.padariaId,
+        padariaNome: padariaSelecionada.nome,
         data: Timestamp.fromDate(values.data as Date),
         itens: values.itens,
         userId: user.uid,
       };
-      // --- FIM DA CORREÇÃO ---
 
       if (vendaToEdit) {
         const vendaRef = doc(db, 'vendas', vendaToEdit.id);
@@ -166,7 +149,6 @@ export function SalesDashboard() {
         toast.success('Venda registrada com sucesso!');
       }
 
-      // Recarrega todos os dados
       fetchVendasEComplementos();
     } catch (error) {
       console.error('Erro ao salvar venda:', error);
@@ -182,7 +164,15 @@ export function SalesDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => fetchVendasEComplementos(true)}
+        >
+          <RefreshCw className="h-4 w-4" />
+          <span className="sr-only">Atualizar dados</span>
+        </Button>
         <Button onClick={handleOpenAddDialog}>
           <Plus className="mr-2 h-4 w-4" />
           Cadastrar Venda
@@ -194,6 +184,8 @@ export function SalesDashboard() {
         setIsOpen={setIsFormOpen}
         onSubmit={handleFormSubmit}
         vendaToEdit={vendaToEdit}
+        padarias={padarias}
+        // 4. Remover a prop 'clientes' que não é mais necessária
       />
 
       <SalesTable

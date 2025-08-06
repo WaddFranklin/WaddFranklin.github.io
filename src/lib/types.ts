@@ -23,23 +23,19 @@ export const clienteSchema = z.object({
 export const padariaSchema = z
   .object({
     nome: z.string().min(3, { message: 'O nome da padaria é obrigatório.' }),
-    endereco: z.string().optional(),
-    bairro: z.string().optional(),
-    cep: z.string().optional(),
     // --- INÍCIO DA ALTERAÇÃO ---
-    // 1. Adicionamos o campo CPF como opcional
-    cpf: z.string().optional(),
-    // 2. Tornamos o CNPJ opcional
-    cnpj: z.string().optional(),
-    // 3. Tornamos o Telefone opcional
-    telefone: z.string().optional(),
+    endereco: z.string().min(3, { message: 'O endereço é obrigatório.' }),
+    numero: z.string().optional(), // Tornamos o número opcional
+    bairro: z.string().min(3, { message: 'O bairro é obrigatório.' }),
+    cep: z.string().min(8, { message: 'O CEP é obrigatório.' }),
     // --- FIM DA ALTERAÇÃO ---
+    cpf: z.string().optional(),
+    cnpj: z.string().optional(),
+    telefone: z.string().optional(),
     clientes: z.array(clienteSchema),
   })
-  // 4. Adicionamos a regra de validação customizada
   .refine((data) => !!data.cpf || !!data.cnpj, {
     message: 'É obrigatório preencher o CPF ou o CNPJ.',
-    // Isso fará a mensagem de erro aparecer em ambos os campos
     path: ['cpf', 'cnpj'],
   });
 
@@ -53,12 +49,13 @@ export type Padaria = {
   id: string;
   userId: string;
   nome: string;
-  endereco?: string;
-  bairro?: string;
-  cep?: string;
-  cpf?: string; // Adicionado ao tipo
-  cnpj?: string; // Marcado como opcional
-  telefone?: string; // Marcado como opcional
+  endereco: string;
+  numero?: string; // Marcado como opcional
+  bairro: string;
+  cep: string;
+  cpf?: string;
+  cnpj?: string;
+  telefone?: string;
 };
 
 // --- SCHEMA DE VENDA ---
@@ -78,7 +75,7 @@ export const itemSchema = z.object({
 });
 
 export const vendaSchema = z.object({
-  clienteId: z.string().min(1, { message: 'Selecione um cliente.' }),
+  padariaId: z.string().min(1, { message: 'Selecione uma padaria.' }),
   data: z.preprocess(
     (arg) => {
       if (typeof arg === 'string' || arg instanceof Date) return new Date(arg);
@@ -97,8 +94,7 @@ export type ItemVenda = z.infer<typeof itemSchema>;
 export type VendaFormValues = z.infer<typeof vendaSchema>;
 export type Venda = {
   id: string;
-  clienteId: string;
-  clienteNome: string;
+  padariaId: string;
   padariaNome: string;
   data: Timestamp;
   itens: ItemVenda[];

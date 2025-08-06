@@ -54,6 +54,7 @@ export function BakeryFormDialog({
     defaultValues: {
       nome: '',
       endereco: '',
+      numero: '',
       bairro: '',
       cep: '',
       cpf: '',
@@ -121,6 +122,7 @@ export function BakeryFormDialog({
         form.reset({
           nome: '',
           endereco: '',
+          numero: '',
           bairro: '',
           cep: '',
           cpf: '',
@@ -185,12 +187,7 @@ export function BakeryFormDialog({
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        CNPJ{' '}
-                        <span className="text-muted-foreground">
-                          (Opcional)
-                        </span>
-                      </FormLabel>
+                      <FormLabel>CNPJ</FormLabel>
                       <FormControl>
                         <Input placeholder="00.000.000/0000-00" {...field} />
                       </FormControl>
@@ -221,12 +218,7 @@ export function BakeryFormDialog({
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        CEP{' '}
-                        <span className="text-muted-foreground">
-                          (Opcional)
-                        </span>
-                      </FormLabel>
+                      <FormLabel>CEP</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -248,8 +240,23 @@ export function BakeryFormDialog({
                   control={form.control}
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
+                      <FormLabel>Endereço</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  name="numero"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
                       <FormLabel>
-                        Endereço{' '}
+                        Número{' '}
                         <span className="text-muted-foreground">
                           (Opcional)
                         </span>
@@ -261,23 +268,20 @@ export function BakeryFormDialog({
                     </FormItem>
                   )}
                 />
+                <FormField
+                  name="bairro"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Bairro</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <FormField
-                name="bairro"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Bairro{' '}
-                      <span className="text-muted-foreground">(Opcional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <Separator />
 
