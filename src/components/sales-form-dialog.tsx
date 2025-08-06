@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+// 1. Importar o tipo 'Resolver'
+import { useForm, useFieldArray, useWatch, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Venda,
@@ -72,7 +73,8 @@ export function SalesFormDialog({
   const [farinhasDisponiveis, setFarinhasDisponiveis] = useState<Farinha[]>([]);
 
   const form = useForm<VendaFormValues>({
-    resolver: zodResolver(vendaSchema), // CORREÇÃO APLICADA AQUI
+    // 2. Adicionar o "cast" de tipo aqui
+    resolver: zodResolver(vendaSchema) as Resolver<VendaFormValues>,
     defaultValues: {
       padariaId: '',
       data: new Date(),
