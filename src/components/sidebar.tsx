@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 
 import { auth } from '@/lib/firebase/client';
 import { signOut } from 'firebase/auth';
-import { menuItems } from './nav-menu'; // Importa os itens do menu
+import { menuItems } from './nav-menu';
+import { useAuth } from './auth-provider'; // 1. Importar o useAuth
 
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { LogOut, Menu, PanelLeft } from 'lucide-react';
+import { Badge } from './ui/badge'; // 2. Importar o Badge
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -27,6 +29,7 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { userProfile } = useAuth(); // 3. Pegar o userProfile
 
   const handleLogout = async () => {
     try {
@@ -46,18 +49,30 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           isCollapsed ? 'w-16' : 'w-64',
         )}
       >
-        <div className="flex h-16 items-center border-b px-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 font-semibold"
-            onClick={() => setIsCollapsed(false)}
-          >
-            {!isCollapsed && <span className="ml-2">AppVendas</span>}
+        <div className="flex h-16 items-center justify-between border-b px-4">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            {!isCollapsed && (
+              <div className="flex flex-col items-start">
+                <span className="ml-2">AppVendas</span>
+                {/* --- INÍCIO DA ALTERAÇÃO --- */}
+                {userProfile && (
+                  <Badge
+                    variant={
+                      userProfile.plan === 'Pro' ? 'default' : 'secondary'
+                    }
+                    className="ml-2 mt-1 h-5 text-xs"
+                  >
+                    {userProfile.plan}
+                  </Badge>
+                )}
+                {/* --- FIM DA ALTERAÇÃO --- */}
+              </div>
+            )}
           </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="ml-auto h-8 w-8"
+            className="h-8 w-8"
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
             {isCollapsed ? (
@@ -70,22 +85,18 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         </div>
 
         <div className="flex flex-1 flex-col justify-between overflow-y-auto">
+          {/* O código da navegação (nav) permanece o mesmo */}
           <nav className="grid items-start gap-1 px-4 py-4 text-sm font-medium">
-            {menuItems.map(({ href, label, icon: Icon }) => (
+            {menuItems.map(({ href, label, icon: Icon, isDisabled }) => (
               <Tooltip key={label}>
                 <TooltipTrigger asChild>
                   <Link
-                    href={href}
-                    onClick={() => {
-                      if (href === '/' && isCollapsed) {
-                        setIsCollapsed(false);
-                      }
-                    }}
+                    href={isDisabled ? '#' : href}
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
                       isCollapsed && 'justify-center',
                       pathname === href && 'bg-muted text-primary',
-                      href === '#' && 'cursor-not-allowed opacity-50',
+                      isDisabled && 'cursor-not-allowed opacity-50',
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -100,6 +111,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             ))}
           </nav>
 
+          {/* O código do rodapé (logout) permanece o mesmo */}
           <div className="px-4 py-4 border-t mt-auto">
             <Tooltip>
               <TooltipTrigger asChild>

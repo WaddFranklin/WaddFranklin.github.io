@@ -2,17 +2,18 @@
 import {
   LayoutDashboard,
   Wheat,
-  History,
-  User,
   Building2,
   Users,
-} from 'lucide-react'; // 1. Importar o ícone Users
+  Crown, // 1. Importar o ícone Crown
+  User,
+} from 'lucide-react';
 
 export const menuItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/flours', label: 'Farinhas', icon: Wheat },
   { href: '/bakeries', label: 'Padarias', icon: Building2 },
   { href: '/clients', label: 'Clientes', icon: Users },
-  { href: '#', label: 'Histórico', icon: History },
-  { href: '#', label: 'Meu Perfil', icon: User },
+  // 2. Adicionar o novo item de menu para a assinatura
+  { href: '/assinatura', label: 'Assinatura', icon: Crown },
+  { href: '#', label: 'Meu Perfil', icon: User, isDisabled: true }, // Adicionei isDisabled para clareza
 ];

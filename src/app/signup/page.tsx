@@ -1,3 +1,4 @@
+// src/app/signup/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -8,9 +9,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { signUpSchema, SignUpFormValues } from '@/lib/types';
 import { toast } from 'sonner';
 
-// Importações do Firebase Auth
-import { auth } from '@/lib/firebase/client';
+// Importações do Firebase
+import { auth, db } from '@/lib/firebase/client'; // 1. Importe o 'db' do Firestore
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore'; // 2. Importe 'doc' e 'setDoc'
 import { FirebaseError } from 'firebase/app';
 
 import { Button } from '@/components/ui/button';
@@ -49,15 +51,29 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
+      // Cria o usuário na autenticação
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         values.email,
         values.password,
       );
 
-      await updateProfile(userCredential.user, {
+      const user = userCredential.user;
+
+      // Atualiza o perfil do usuário na autenticação (nome de exibição)
+      await updateProfile(user, {
         displayName: values.fullName,
       });
+
+      // --- INÍCIO DA ADIÇÃO ---
+      // 3. Crie o documento do usuário no Firestore
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, {
+        email: user.email,
+        plan: 'Free', // Define o plano padrão para novos usuários
+        subscriptionStatus: 'inactive',
+      });
+      // --- FIM DA ADIÇÃO ---
 
       toast.success('Cadastro realizado com sucesso!', {
         description: 'Você será redirecionado para o login.',

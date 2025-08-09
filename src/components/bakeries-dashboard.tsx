@@ -29,13 +29,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import Link from 'next/link';
 
 export function BakeriesDashboard() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth(); // Obtenha o perfil do usuário
   const [padarias, setPadarias] = useState<Padaria[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [padariaToEdit, setPadariaToEdit] = useState<Padaria | null>(null);
+
+  const isPro = userProfile?.plan === 'Pro'; // Verifique se o plano é Pro
 
   const fetchPadarias = useCallback(async () => {
     if (!user) return;
@@ -150,10 +153,16 @@ export function BakeriesDashboard() {
               Cadastre e gerencie suas padarias e clientes.
             </CardDescription>
           </div>
-          <Button onClick={handleOpenAddDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Cadastro
-          </Button>
+          {isPro ? (
+            <Button onClick={handleOpenAddDialog}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Cadastro
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link href="/assinatura">Fazer Upgrade para Cadastrar</Link>
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (

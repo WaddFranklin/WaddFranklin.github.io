@@ -24,13 +24,16 @@ import { SalesTable } from './sales-table';
 import { SalesFormDialog } from './sales-form-dialog';
 import { Button } from './ui/button';
 import { Plus, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 
 export function SalesDashboard() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth(); // Obtenha o perfil do usuário
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [vendaToEdit, setVendaToEdit] = useState<Venda | null>(null);
+
+  const isPro = userProfile?.plan === 'Pro'; // Verifique se o plano é Pro
 
   // 2. Remover o estado 'clientes'
   const [padarias, setPadarias] = useState<Padaria[]>([]);
@@ -173,10 +176,16 @@ export function SalesDashboard() {
           <RefreshCw className="h-4 w-4" />
           <span className="sr-only">Atualizar dados</span>
         </Button>
-        <Button onClick={handleOpenAddDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Cadastrar Venda
-        </Button>
+        {isPro ? (
+          <Button onClick={handleOpenAddDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Cadastrar Venda
+          </Button>
+        ) : (
+          <Button asChild>
+            <Link href="/assinatura">Fazer Upgrade para Cadastrar</Link>
+          </Button>
+        )}
       </div>
 
       <SalesFormDialog

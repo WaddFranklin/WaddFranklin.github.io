@@ -9,37 +9,80 @@ import {
   ReactNode,
 } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase/client'; // Importando a instância do auth
+import { auth, db } from '@/lib/firebase/client';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { toast } from 'sonner'; // Importar o toast para notificar erros
 
-// O AuthContextType agora usará o tipo User do Firebase
+// Interface para os dados do nosso usuário no Firestore
+interface UserProfile {
+  plan: 'Free' | 'Pro';
+  subscriptionStatus?: string;
+}
+
 type AuthContextType = {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  userProfile: null,
   loading: true,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged é o observador do Firebase que escuta
-    // mudanças no estado de autenticação (login, logout).
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeSnapshot: () => void = () => {};
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      // Limpa qualquer listener anterior para evitar vazamento de memória
+      unsubscribeSnapshot();
+
       setUser(user);
-      setLoading(false);
+
+      if (user) {
+        // Se há um usuário, escuta o perfil dele no Firestore
+        const userRef = doc(db, 'users', user.uid);
+
+        unsubscribeSnapshot = onSnapshot(
+          userRef,
+          (docSnap) => {
+            if (docSnap.exists()) {
+              setUserProfile(docSnap.data() as UserProfile);
+            } else {
+              // Caso o documento não exista por algum motivo, define um perfil Free
+              setUserProfile({ plan: 'Free' });
+            }
+            // A verificação de auth e perfil terminou
+            setLoading(false);
+          },
+          (error) => {
+            // NOVO: Captura de erro do listener do Firestore
+            console.error('Erro ao buscar perfil do usuário:', error);
+            toast.error('Erro ao carregar dados do usuário.');
+            // Mesmo com erro, terminamos o carregamento para não travar a tela
+            setLoading(false);
+          },
+        );
+      } else {
+        // Se não há usuário, não há perfil e o carregamento terminou
+        setUserProfile(null);
+        setLoading(false);
+      }
     });
 
-    // A função retornada é para limpar o observador
-    // quando o componente for desmontado, evitando vazamento de memória.
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      unsubscribeSnapshot();
+    };
   }, []);
 
-  const value = { user, loading };
+  const value = { user, userProfile, loading };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

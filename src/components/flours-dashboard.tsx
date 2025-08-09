@@ -22,13 +22,16 @@ import { FloursTable } from './flours-table';
 import { FlourFormDialog } from './flour-form-dialog';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
+import Link from 'next/link';
 
 export function FloursDashboard() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth(); // Obtenha o perfil do usuário
   const [farinhas, setFarinhas] = useState<Farinha[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [farinhaToEdit, setFarinhaToEdit] = useState<Farinha | null>(null);
+
+  const isPro = userProfile?.plan === 'Pro'; // Verifique se o plano é Pro
 
   const fetchFarinhas = useCallback(async () => {
     if (!user) return;
@@ -111,10 +114,16 @@ export function FloursDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button onClick={handleOpenAddDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Cadastrar Farinha
-        </Button>
+        {isPro ? (
+          <Button onClick={handleOpenAddDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Cadastrar Farinha
+          </Button>
+        ) : (
+          <Button asChild>
+            <Link href="/assinatura">Fazer Upgrade para Cadastrar</Link>
+          </Button>
+        )}
       </div>
 
       <FlourFormDialog
