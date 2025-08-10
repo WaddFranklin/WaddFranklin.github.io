@@ -1,12 +1,12 @@
 // src/app/api/create-checkout-session/route.ts
 import { NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe'; // Criaremos este arquivo a seguir
+import { stripe } from '@/lib/stripe';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { headers } from 'next/headers';
 
 export async function POST(req: Request) {
-  const headersList = headers();
-  const authorization = headersList.get('authorization');
+  // A função headers() agora é usada diretamente.
+  const authorization = (await headers()).get('authorization');
 
   if (!authorization || !authorization.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,7 +32,6 @@ export async function POST(req: Request) {
     const userDoc = await userRef.get();
     let stripeCustomerId = userDoc.data()?.stripeCustomerId;
 
-    // Se o usuário ainda não for um cliente no Stripe, crie um.
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
         email: userEmail,
@@ -44,7 +43,6 @@ export async function POST(req: Request) {
       await userRef.set({ stripeCustomerId }, { merge: true });
     }
 
-    // Crie a sessão de Checkout no Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',

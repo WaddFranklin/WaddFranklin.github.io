@@ -23,7 +23,7 @@ export default function AssinaturaPage() {
   const [loading, setLoading] = useState(false);
 
   // Substitua pelo ID do preço do seu plano Pro no Stripe
-  const proPriceId = 'price_...';
+  const proPriceId = 'price_1RuEA0PhlS20zt4gz3i7EmLj';
 
   const handleUpgrade = async () => {
     if (!user) {
