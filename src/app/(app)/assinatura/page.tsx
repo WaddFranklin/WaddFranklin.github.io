@@ -8,78 +8,110 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
+import { Crown, CheckCircle2 } from 'lucide-react';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
 export default function AssinaturaPage() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // Substitua pelo ID do preço do seu plano Pro no Stripe
-  const proPriceId = 'price_1RuEA0PhlS20zt4gz3i7EmLj';
+  const isPro = userProfile?.plan === 'Pro';
+  // NOVO: Verifica se o cancelamento está agendado
+  const isCanceledAtPeriodEnd = userProfile?.cancelAtPeriodEnd === true;
 
-  const handleUpgrade = async () => {
+  const proPriceId = 'price_1RuEA0PhlS20zt4gz3i7EmLj'; // Substitua pelo seu ID de preço real
+
+  const handleCreateSession = async (action: 'checkout' | 'portal') => {
     if (!user) {
-      toast.error('Você precisa estar logado para fazer o upgrade.');
+      toast.error('Você precisa estar logado.');
       return;
     }
     setLoading(true);
 
     try {
       const idToken = await user.getIdToken();
+      let apiUrl = '';
+      let body = {};
 
-      const res = await fetch('/api/create-checkout-session', {
+      if (action === 'checkout') {
+        apiUrl = '/api/create-checkout-session';
+        body = {
+          priceId: proPriceId,
+          successUrl: `${window.location.origin}/`,
+          cancelUrl: `${window.location.origin}/assinatura`,
+        };
+      } else {
+        apiUrl = '/api/create-portal-session';
+        body = {
+          returnUrl: `${window.location.origin}/assinatura`,
+        };
+      }
+
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${idToken}`,
         },
-        body: JSON.stringify({
-          priceId: proPriceId,
-          successUrl: `${window.location.origin}/`,
-          cancelUrl: `${window.location.origin}/assinatura`,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
-        throw new Error('Falha ao criar a sessão de checkout.');
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Falha ao criar a sessão.');
       }
 
-      const { sessionId } = await res.json();
-      const stripe = await stripePromise;
+      const { sessionId, url } = await res.json();
 
-      if (stripe) {
-        const { error } = await stripe.redirectToCheckout({ sessionId });
-        if (error) {
-          toast.error(error.message);
+      if (action === 'checkout') {
+        const stripe = await stripePromise;
+        if (stripe) {
+          await stripe.redirectToCheckout({ sessionId });
         }
+      } else {
+        window.location.href = url;
       }
     } catch (error) {
       console.error(error);
-      toast.error('Ocorreu um erro ao tentar fazer o upgrade.');
+      const errorMessage =
+        error instanceof Error ? error.message : 'Ocorreu um erro inesperado.';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
+  // --- INÍCIO DA ALTERAÇÃO ---
+  const getButtonText = () => {
+    if (loading) return 'Aguarde...';
+    if (!isPro) return 'Fazer Upgrade para o Pro';
+    if (isCanceledAtPeriodEnd) return 'Reativar Assinatura';
+    return 'Gerenciar Assinatura';
+  };
+  // --- FIM DA ALTERAÇÃO ---
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Gerenciar Assinatura</h1>
         <p className="text-sm text-muted-foreground">
-          Escolha o plano que melhor se adapta às suas necessidades.
+          {isPro
+            ? 'Você está no plano Pro. Gerencie sua assinatura ou visualize suas faturas.'
+            : 'Escolha o plano que melhor se adapta às suas necessidades.'}
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+        <Card className={isPro ? 'opacity-60' : ''}>
           <CardHeader>
             <CardTitle>Plano Free</CardTitle>
             <CardDescription>
@@ -98,16 +130,27 @@ export default function AssinaturaPage() {
               <li>- Funcionalidades de cadastro desabilitadas</li>
             </ul>
           </CardContent>
+          <CardFooter>
+            {userProfile?.plan === 'Free' && (
+              <div className="flex items-center text-sm font-semibold">
+                <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                Seu plano atual
+              </div>
+            )}
+          </CardFooter>
         </Card>
 
-        <Card className="border-primary">
+        <Card className={isPro ? 'border-primary' : ''}>
           <CardHeader>
-            <CardTitle>Plano Pro</CardTitle>
+            <CardTitle className="flex items-center">
+              <Crown className="mr-2 h-5 w-5 text-yellow-500" />
+              Plano Pro
+            </CardTitle>
             <CardDescription>
               Acesso total a todos os recursos da plataforma.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col justify-between h-full">
+          <CardContent>
             <div>
               <p className="text-2xl font-bold">
                 R$ 30,00
@@ -121,14 +164,18 @@ export default function AssinaturaPage() {
                 <li>✓ Suporte prioritário</li>
               </ul>
             </div>
+          </CardContent>
+          <CardFooter>
+            {/* --- INÍCIO DA ALTERAÇÃO --- */}
             <Button
-              className="mt-6 w-full"
-              onClick={handleUpgrade}
+              className="w-full"
+              onClick={() => handleCreateSession(isPro ? 'portal' : 'checkout')}
               disabled={loading}
             >
-              {loading ? 'Aguarde...' : 'Fazer Upgrade para o Pro'}
+              {getButtonText()}
             </Button>
-          </CardContent>
+            {/* --- FIM DA ALTERAÇÃO --- */}
+          </CardFooter>
         </Card>
       </div>
     </div>

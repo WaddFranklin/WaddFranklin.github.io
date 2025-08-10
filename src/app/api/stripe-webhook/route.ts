@@ -24,14 +24,30 @@ export async function POST(req: Request) {
     });
   }
 
-  const session = event.data.object as Stripe.Checkout.Session;
+  const session = event.data.object as any; // Usar 'any' para acesso flexível
   const userId = session?.metadata?.firebaseUID;
 
-  if (!userId) {
+  // Para eventos de assinatura, o userId está no customer metadata
+  let finalUserId = userId;
+  if (!finalUserId && session.customer) {
+    try {
+      const customer = await stripe.customers.retrieve(
+        session.customer as string,
+      );
+      finalUserId = (customer as Stripe.Customer).metadata.firebaseUID;
+    } catch (e) {
+      console.error('Could not retrieve customer to find user id', e);
+      return new NextResponse('Webhook Error: Could not find user', {
+        status: 400,
+      });
+    }
+  }
+
+  if (!finalUserId) {
     return new NextResponse('Webhook Error: Missing user ID', { status: 400 });
   }
 
-  const userRef = adminDb.collection('users').doc(userId);
+  const userRef = adminDb.collection('users').doc(finalUserId);
 
   try {
     switch (event.type) {
@@ -42,13 +58,14 @@ export async function POST(req: Request) {
 
         await userRef.update({
           subscriptionId: subscription.id,
-          plan: 'Pro', // Ou extraia do produto se tiver múltiplos planos
+          plan: 'Pro',
           subscriptionStatus: subscription.status,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
         });
         break;
       }
 
-      case 'customer.subscription.deleted':
+      // Evento disparado quando uma assinatura é cancelada (imediatamente ou no futuro) ou reativada
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const newPlan = subscription.status === 'active' ? 'Pro' : 'Free';
@@ -56,6 +73,21 @@ export async function POST(req: Request) {
         await userRef.update({
           plan: newPlan,
           subscriptionStatus: subscription.status,
+          // --- INÍCIO DA ADIÇÃO ---
+          // Salva o estado de cancelamento agendado
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          // --- FIM DA ADIÇÃO ---
+        });
+        break;
+      }
+
+      // Evento disparado no fim do período para uma assinatura que foi cancelada
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await userRef.update({
+          plan: 'Free',
+          subscriptionStatus: subscription.status,
+          cancelAtPeriodEnd: false, // Garante que o estado seja limpo
         });
         break;
       }
