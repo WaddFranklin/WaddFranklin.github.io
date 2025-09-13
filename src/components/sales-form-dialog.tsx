@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-// 1. Importar o tipo 'Resolver'
 import { useForm, useFieldArray, useWatch, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -43,7 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from './ui/separator';
 import { Trash2, PlusCircle } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
 
@@ -73,7 +72,6 @@ export function SalesFormDialog({
   const [farinhasDisponiveis, setFarinhasDisponiveis] = useState<Farinha[]>([]);
 
   const form = useForm<VendaFormValues>({
-    // 2. Adicionar o "cast" de tipo aqui
     resolver: zodResolver(vendaSchema) as Resolver<VendaFormValues>,
     defaultValues: {
       padariaId: '',
@@ -173,6 +171,7 @@ export function SalesFormDialog({
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-6"
             >
+              {/* 1. Grid de Padaria/Data ajustado */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -260,6 +259,7 @@ export function SalesFormDialog({
                         </FormItem>
                       )}
                     />
+                    {/* 2. Grid dos detalhes do item ajustado */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <FormField
                         control={form.control}

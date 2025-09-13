@@ -35,7 +35,8 @@ export function ClientsList({ clients }: ClientsListProps) {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
+      {/* 1. Classes de grid ajustadas para mobile-first */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
         {clients.map((client) => (
           <Card
             key={client.id}

@@ -168,6 +168,7 @@ export function BakeryFormDialog({
                   </FormItem>
                 )}
               />
+              {/* 1. Grid de CPF/CNPJ ajustado */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   name="cpf"
@@ -212,6 +213,7 @@ export function BakeryFormDialog({
                   </FormItem>
                 )}
               />
+              {/* 2. Grid de Endereço ajustado */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <FormField
                   name="cep"
@@ -249,6 +251,7 @@ export function BakeryFormDialog({
                   )}
                 />
               </div>
+              {/* 3. Grid de Número/Bairro ajustado */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   name="numero"
@@ -294,6 +297,7 @@ export function BakeryFormDialog({
                     key={field.id}
                     className="p-4 border rounded-lg space-y-4 relative"
                   >
+                    {/* 4. Grid de Contatos Adicionais ajustado */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         name={`clientes.${index}.nome`}
