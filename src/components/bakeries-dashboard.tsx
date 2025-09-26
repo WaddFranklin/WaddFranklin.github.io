@@ -29,7 +29,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { cn } from '@/lib/utils'; // 1. Importar a função cn
 
 export function BakeriesDashboard() {
   const { user } = useAuth();
@@ -82,7 +81,7 @@ export function BakeriesDashboard() {
       const padariaData = {
         nome: values.nome,
         endereco: values.endereco || '',
-        numero: values.numero || '',
+        numero: values.numero || '', // Adicionado
         bairro: values.bairro || '',
         cep: values.cep || '',
         cpf: values.cpf || '',
@@ -141,13 +140,7 @@ export function BakeriesDashboard() {
         padariaToEdit={padariaToEdit}
       />
       <Card>
-        {/* 2. Classes de responsividade adicionadas aqui */}
-        <CardHeader
-          className={cn(
-            'flex-col items-start gap-4', // Layout de coluna como padrão (mobile)
-            'sm:flex-row sm:items-center sm:justify-between', // Layout de linha a partir de telas pequenas (sm)
-          )}
-        >
+        <CardHeader className="flex-row items-center justify-between gap-4">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
